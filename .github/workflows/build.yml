@@ -2,12 +2,13 @@
 #
 # Builds and tests planche-contact-windows.
 #
-#   rust   (Linux)    tests the engine, then cross-compiles it for Windows
-#   app    (Windows)  tests the window's core library with that engine,
-#                     builds the window and checks that it starts
+#   rust   (Linux)    tests the engine and the context menu handler, then
+#                     cross-compiles both for Windows
+#   app    (Windows)  tests the window's core library with that engine and
+#                     the menu handler's COM code, builds the window, then
+#                     checks the whole chain: menu handler -> window -> engine
 #
-# The context menu verb and the installer get their jobs when they arrive,
-# as in explorer-convert-images.
+# The installer gets its job when it arrives, as in explorer-convert-images.
 
 name: Build
 
@@ -56,19 +57,23 @@ jobs:
       - name: Build for Windows
         run: cargo build --release --locked --target "$WINDOWS_TARGET"
 
-      # It must run on a Windows that has no MinGW installed.
-      - name: Check that the engine needs no MinGW DLL
+      # They must run on a Windows that has no MinGW installed.
+      - name: Check that the programs need no MinGW DLL
         run: |
-          if x86_64-w64-mingw32-objdump -p "target/$WINDOWS_TARGET/release/planche-contact-engine.exe" \
-              | grep -i 'DLL Name' | grep -i -E 'libstdc\+\+|libgcc|libwinpthread'; then
-            echo "::error::planche-contact-engine.exe depends on a MinGW DLL (see above)"
-            exit 1
-          fi
+          for program in planche-contact-engine planche-contact-verb; do
+            if x86_64-w64-mingw32-objdump -p "target/$WINDOWS_TARGET/release/$program.exe" \
+                | grep -i 'DLL Name' | grep -i -E 'libstdc\+\+|libgcc|libwinpthread'; then
+              echo "::error::$program.exe depends on a MinGW DLL (see above)"
+              exit 1
+            fi
+          done
 
       - uses: actions/upload-artifact@v7
         with:
           name: engine-windows
-          path: target/${{ env.WINDOWS_TARGET }}/release/planche-contact-engine.exe
+          path: |
+            target/${{ env.WINDOWS_TARGET }}/release/planche-contact-engine.exe
+            target/${{ env.WINDOWS_TARGET }}/release/planche-contact-verb.exe
           if-no-files-found: error
 
   app:
@@ -97,34 +102,39 @@ jobs:
           dotnet run -c Release --project app/PlancheContact.Core.Tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # Its COM and shell code only exists in a Windows build.
+      - name: Test the menu handler on Windows
+        shell: pwsh
+        run: |
+          $channel = (Select-String -Path rust-toolchain.toml -Pattern '^channel = "(.*)"$').Matches[0].Groups[1].Value
+          rustup toolchain install $channel --profile minimal --target $env:WINDOWS_TARGET
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked -p planche-contact-verb
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Build the window
         shell: pwsh
         run: |
           dotnet publish app/PlancheContact -c Release -r win-x64 -p:Platform=x64 -o dist/planche-contact
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Add the engine
+      - name: Add the engine and the menu handler
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist\planche-contact\engine | Out-Null
           Copy-Item engine-windows\planche-contact-engine.exe dist\planche-contact\engine\
+          Copy-Item engine-windows\planche-contact-verb.exe dist\planche-contact\
 
-      # The window must start and stay up (a missing resource file, for
-      # example, makes it stop at once), with its engine found next to it.
-      - name: Check that the window starts
+      # On the real thing: the content of the folder, the window started
+      # directly, then the whole chain menu handler -> window, as File
+      # Explorer does (see shell-verb/examples/selftest.rs).
+      - name: Check the built programs together
         shell: pwsh
         run: |
-          foreach ($file in 'PlancheContact.exe', 'PlancheContact.pri', 'engine\planche-contact-engine.exe') {
-            if (-not (Test-Path "dist\planche-contact\$file")) { throw "missing in the built folder: $file" }
-          }
           & dist\planche-contact\engine\planche-contact-engine.exe --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $window = Start-Process -FilePath dist\planche-contact\PlancheContact.exe -PassThru
-          Start-Sleep -Seconds 15
-          if ($window.HasExited) { throw "the window stopped by itself (exit code $($window.ExitCode))" }
-          Stop-Process -Id $window.Id
-          $log = Join-Path $env:TEMP 'planche-contact-app.log'
-          if (Test-Path $log) { Get-Content $log; throw "the window recorded an error" }
+          target\debug\examples\selftest.exe --dist dist\planche-contact
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Only when a step above failed: the errors Windows itself recorded in
       # the last half hour. For a program that stopped by itself, they name
