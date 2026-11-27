@@ -1,0 +1,12 @@
+# Rust
+/target
+
+# C# (dotnet build / publish)
+bin/
+obj/
+*.user
+.vs/
+
+# Build results (build-installer.sh, CI artifacts unpacked locally)
+/dist
+/release-notes.md

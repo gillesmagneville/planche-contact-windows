@@ -1,0 +1,7 @@
+# Same line endings (LF) for everyone and on every system, Windows included:
+# several tests compare or search text files, and the installer script and
+# the shell scripts are read by tools on Linux.
+* text=auto eol=lf
+
+*.ico binary
+*.png binary
