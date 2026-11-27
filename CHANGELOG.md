@@ -15,6 +15,8 @@ GitHub are taken from it (see "Publishing a release" in `CONTRIBUTING.md`).
 
 ## [Unreleased]
 
+## 2026-11-27 — v5.3.0
+
 First release of **Planche-Contact for Windows**, which replaces the earlier
 version for Windows (GTK window, Python engine). It makes the same contact
 sheets, PDF, HTML gallery and CSV index as version 5.3.0 of

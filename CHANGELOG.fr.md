@@ -16,6 +16,8 @@ sur GitHub en sont tirées (voir « Publier une version » dans
 
 ## [Non publié]
 
+## 2026-11-27 — v5.3.0
+
 Première version de **Planche-Contact pour Windows**, qui remplace la
 version précédente pour Windows (fenêtre GTK, moteur Python). Elle produit
 les mêmes planches contact, PDF, galerie HTML et index CSV que la version
