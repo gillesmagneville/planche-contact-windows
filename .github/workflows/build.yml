@@ -122,12 +122,14 @@ jobs:
           dotnet publish app/PlancheContact -c Release -r win-x64 -p:Platform=x64 -o dist/planche-contact
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Add the engine and the menu handler
+      - name: Add the engine, the menu handler and the manual
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist\planche-contact\engine | Out-Null
           Copy-Item engine-windows\planche-contact-engine.exe dist\planche-contact\engine\
           Copy-Item engine-windows\planche-contact-verb.exe dist\planche-contact\
+          New-Item -ItemType Directory -Force dist\planche-contact\docs | Out-Null
+          Copy-Item docs\planche-contact-manual*.html dist\planche-contact\docs\
 
       # On the real thing: the content of the folder, the window started
       # directly, then the whole chain menu handler -> window, as File

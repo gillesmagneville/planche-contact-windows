@@ -91,13 +91,11 @@ if [ -n "$APP_DIR" ]; then
     cp -a "$APP_DIR/." "$DIST_DIR/"
     cp "$RUST_OUT/planche-contact-engine.exe" "$DIST_DIR/engine/"
     cp "$RUST_OUT/$VERB_EXE" "$DIST_DIR/"
-    if compgen -G "$ROOT/docs/planche-contact-manual*.html" >/dev/null; then
-        mkdir -p "$DIST_DIR/docs"
-        cp "$ROOT"/docs/planche-contact-manual*.html "$DIST_DIR/docs/"
-    fi
+    mkdir -p "$DIST_DIR/docs"
+    cp "$ROOT"/docs/planche-contact-manual*.html "$DIST_DIR/docs/"
 fi
 
-for file in "$APP_EXE" "$APP_PRI" "$ENGINE_EXE" "$VERB_EXE"; do
+for file in "$APP_EXE" "$APP_PRI" "$ENGINE_EXE" "$VERB_EXE" docs/planche-contact-manual.html; do
     [ -f "$DIST_DIR/$file" ] || die "$DIST_DIR does not hold $file"
 done
 
