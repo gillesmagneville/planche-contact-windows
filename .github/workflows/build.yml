@@ -8,7 +8,11 @@
 #                     the menu handler's COM code, builds the window, then
 #                     checks the whole chain: menu handler -> window -> engine
 #   installer (Linux) builds the NSIS installer from that folder; on a
-#                     version tag, prepares a draft release with it
+#                     version tag, prepares a draft release with it (once
+#                     the installer passed the check below)
+#   install (Windows) installs with that installer, checks what it put in
+#                     place, starts the installed window, then uninstalls
+#                     and checks that nothing is left
 
 name: Build
 
@@ -159,8 +163,6 @@ jobs:
     name: Installer
     needs: app
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write # to create the draft release, on a version tag only
     steps:
       - uses: actions/checkout@v7
 
@@ -185,9 +187,51 @@ jobs:
             dist/planche-contact-*-setup.exe.sha256
           if-no-files-found: error
 
+  install:
+    name: Install and uninstall (Windows)
+    needs: installer
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: installer
+          path: dist
+
+      - name: Install, check, uninstall
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist\planche-contact-*-setup.exe | Select-Object -First 1
+          pwsh -NoProfile -File tools\check-install.ps1 -Installer $installer.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Show the errors recorded by Windows
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Level = 1, 2; StartTime = (Get-Date).AddMinutes(-30) } -ErrorAction SilentlyContinue |
+            Select-Object -First 12 |
+            Format-List TimeCreated, ProviderName, Id, Message
+          exit 0
+
+  release:
+    name: Draft release
+    needs: [installer, install]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # to create the draft release
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: installer
+          path: dist
+
       # A draft: nothing is public until you review and publish it yourself.
       - name: Prepare a draft release
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
