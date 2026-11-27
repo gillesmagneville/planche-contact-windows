@@ -13,7 +13,7 @@ construite comme
 | Dossier | Contenu | Langage |
 |---|---|---|
 | `engine/` | Le moteur : planches contact (JPEG), PDF à texte sélectionnable, galerie HTML, index CSV, fichiers RAW | Rust |
-| `app/` | La fenêtre (WinUI 3) | C# — *à venir* |
+| `app/` | La fenêtre (WinUI 3) et sa bibliothèque testée | C# |
 | `shell-verb/` | « Ouvrir dans Planche-Contact » dans le menu clic droit de l'Explorateur | Rust — *à venir* |
 | `installer/` | Installateur par utilisateur, sans droits d'administrateur | NSIS — *à venir* |
 
@@ -37,6 +37,26 @@ Le moteur est un programme en ligne de commande : `planche-contact-engine
 generate -i DOSSIER --pdf --html --csv` accepte les options du `portfolio.py`
 de la version Linux. Les autres commandes, utilisées par la fenêtre, sont
 décrites en tête de `engine/src/main.rs`.
+
+## Construire la fenêtre
+
+La bibliothèque `app/PlancheContact.Core` (arguments, réglages, dialogue
+avec le moteur, traductions) se construit et se teste aussi sous Linux, avec
+le SDK .NET 10 et le moteur construit par `cargo build --release` :
+
+```bash
+dotnet run -c Release --project app/PlancheContact.Core.Tests
+```
+
+La fenêtre elle-même se construit sous Windows :
+
+```powershell
+dotnet publish app/PlancheContact -c Release -r win-x64 -p:Platform=x64 -o dist/planche-contact
+```
+
+puis `planche-contact-engine.exe` se place dans `dist/planche-contact/engine/`.
+Les textes propres à la fenêtre Windows sont dans `locales/windows/` ; tous
+les autres sont ceux de `locales/`, partagés avec la version Linux.
 
 ## Licence
 

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Everything of the window that does not draw on screen: arguments,
+       settings, talking to the engine, translations. No Windows-specific
+       dependency, so that it also builds and is tested on Linux. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PlancheContact.Core</RootNamespace>
+    <AssemblyName>PlancheContact.Core</AssemblyName>
+  </PropertyGroup>
+
+  <!-- The texts of the interface are those of the engine and of the Linux
+       window: the Python dictionaries of locales/ (the same files as in
+       planche-contact-linux), embedded as they are and read at startup
+       (Localization/Strings.cs). Nothing generated. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../locales/en.py;../../locales/fr.py;../../locales/de.py;../../locales/es.py"
+                      LogicalName="locales/%(Filename).py" />
+    <!-- The few texts only the Windows window uses, same shape. -->
+    <EmbeddedResource Include="../../locales/windows/*.py"
+                      LogicalName="locales/windows/%(Filename).py" />
+  </ItemGroup>
+
+</Project>
