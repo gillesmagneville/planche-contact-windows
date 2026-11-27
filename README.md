@@ -15,7 +15,7 @@ built the same way as
 | `engine/` | The engine: contact sheets (JPEG), PDF with selectable text, HTML gallery, CSV index, RAW files | Rust |
 | `app/` | The window (WinUI 3) and its tested core library | C# |
 | `shell-verb/` | "Open in Planche-Contact" in the Explorer's right-click menu | Rust |
-| `installer/` | Per-user installer, no administrator rights | NSIS — *to come* |
+| `installer/` | Per-user installer, no administrator rights | NSIS |
 
 The engine is a rewrite, rule for rule, of the Python engine of the Linux
 version: same layouts, captions, themes, watermark, gallery and texts. The
