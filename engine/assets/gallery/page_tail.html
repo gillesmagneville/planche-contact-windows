@@ -1,0 +1,488 @@
+
+</div>
+@@nav_html@@
+<div class="footer">
+    <p>@@t:gallery.footer@@</p>
+    <p>@@footer_credit@@</p>
+    @@theme_toggle@@
+</div>
+
+<div id="lightbox" class="lightbox" onclick="if (event.target === this) closeLightbox()">
+    <div class="lightbox-topbar">
+        <span id="lightbox-filename" class="lightbox-filename"></span>
+        <span class="lightbox-page-indicator">@@lightbox_page@@</span>
+        <div class="lightbox-actions">
+            <button class="lightbox-btn" onclick="zoomOut()" aria-label="@@t:gallery.zoom_out@@" title="@@t:gallery.zoom_out_title@@">&minus;</button>
+            <button class="lightbox-btn lightbox-zoom-level" id="lightbox-zoom-level" onclick="zoomReset()" aria-label="@@t:gallery.zoom_reset_label@@" title="@@t:gallery.zoom_reset_title@@">100 %</button>
+            <button class="lightbox-btn" onclick="zoomIn()" aria-label="@@t:gallery.zoom_in@@" title="@@t:gallery.zoom_in_title@@">&plus;</button>
+            <button class="lightbox-btn" onclick="toggleInfo()" aria-label="@@t:gallery.info@@" title="@@t:gallery.info@@">&#9432;</button>
+            <a id="lightbox-download" class="lightbox-btn" href="#" onclick="downloadCurrentImage(); return false;" aria-label="@@t:gallery.download@@" title="@@t:gallery.download@@">&#8681;</a>
+            <button class="lightbox-btn" onclick="toggleFullscreen()" aria-label="@@t:gallery.fullscreen@@" title="@@t:gallery.fullscreen@@">&#10530;</button>
+            <button class="lightbox-btn" onclick="closeLightbox()" aria-label="@@t:gallery.close@@" title="@@t:gallery.close@@">&times;</button>
+        </div>
+    </div>
+
+    <button class="lightbox-prev" onclick="showDelta(-1)" aria-label="@@t:gallery.prev@@">&#8249;</button>
+    <img id="lightbox-img" src="" alt="">
+    <button class="lightbox-next" onclick="showDelta(1)" aria-label="@@t:gallery.next@@">&#8250;</button>
+
+    <div id="lightbox-info" class="lightbox-info">
+        <p><strong>@@t:gallery.info_filename@@</strong> <span id="info-filename"></span></p>
+        <p><strong>@@t:gallery.info_resolution@@</strong> <span id="info-resolution"></span></p>
+        <p><strong>@@t:gallery.info_size@@</strong> <span id="info-size"></span></p>
+        <p><strong>@@t:gallery.info_date@@</strong> <span id="info-date"></span></p>
+    </div>
+
+    <div id="lightbox-toast" class="lightbox-toast"></div>
+
+    <div class="lightbox-bottombar">
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+        @@goto_page_html@@
+    </div>
+</div>
+
+<script>
+    const galleryImages = @@images_json@@;
+    const galleryMeta = @@meta_json@@;
+    const downloadLabel = @@download_label_js@@;
+    const downloadOriginalLabel = @@download_original_label_js@@;
+    const totalPages = @@total_pages@@;
+    const currentPage = @@current_page@@;
+    let currentIndex = -1;
+    let currentZoom = 100;
+    let baseWidth = 0, baseHeight = 0;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let dragStartX = 0, dragStartY = 0, panStartX = 0, panStartY = 0;
+    const ZOOM_MIN = 50, ZOOM_MAX = 200, ZOOM_STEP = 10;
+    let lastWheelAction = 0;
+    const WHEEL_THROTTLE_MS = 150;
+
+    function pageUrl(n) {
+        return n === 1 ? 'index.html' : 'page_' + String(n).padStart(3, '0') + '.html';
+    }
+
+    // Discreet theme selector (specification §4): toggles between the
+    // gallery's theme and its light/dark opposite, and stores the visitor's
+    // choice (specific to their browser and to this generation of the
+    // gallery - see the script at the top of the page, which applies this
+    // choice before the first render to avoid any flash). A second click
+    // REMOVES this choice: the page then goes back to exactly the theme
+    // requested at generation (including "neutral", which a simple
+    // light/dark back-and-forth could never get back).
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        if (current) {
+            document.documentElement.removeAttribute('data-theme');
+            try { localStorage.removeItem('@@storage_key@@'); } catch (e) {}
+            return;
+        }
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const next = (@@dark_expr@@) ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('@@storage_key@@', next); } catch (e) {}
+    }
+
+    function openLightbox(event, index) {
+        event.preventDefault();
+        currentIndex = index;
+        updateLightbox();
+        document.getElementById('lightbox').classList.add('open');
+        return false;
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.getElementById('lightbox-info').classList.remove('open');
+    }
+
+    function showDelta(delta) {
+        if (galleryImages.length === 0) return;
+        const newIndex = currentIndex + delta;
+
+        // Beyond the bounds of the current page: really moves to the
+        // next/previous page (wrapping around the whole gallery at both ends)
+        // rather than looping over the photos of this one page alone. A
+        // single-page gallery has nowhere to go: it keeps the old behaviour
+        // (simple local wrap-around, without reloading the page for nothing).
+        if (totalPages > 1 && (newIndex < 0 || newIndex >= galleryImages.length)) {
+            if (newIndex < 0) {
+                const wrapping = currentPage === 1;
+                const targetPage = wrapping ? totalPages : currentPage - 1;
+                window.location.href = pageUrl(targetPage) + '?open=last' + (wrapping ? '&wrap=back' : '');
+            } else {
+                const wrapping = currentPage === totalPages;
+                const targetPage = wrapping ? 1 : currentPage + 1;
+                window.location.href = pageUrl(targetPage) + '?open=0' + (wrapping ? '&wrap=fwd' : '');
+            }
+            return;
+        }
+
+        currentIndex = (newIndex + galleryImages.length) % galleryImages.length;
+        updateLightbox();
+    }
+
+    function triggerBlobDownload(blob, filename) {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('lightbox-toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 6000);
+    }
+
+    // Ordinary download link (`download` attribute): honoured by some
+    // browsers for a neighbouring file in file://, ignored by others
+    // (Chrome/Chromium then open the link in a NEW tab thanks to
+    // target=_blank: the gallery is never left). In all cases, the message
+    // explains what to do if nothing was downloaded.
+    function openDownloadLink(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast(@@download_toast_js@@);
+    }
+
+    // Downloads in progress from a companion file, by file name:
+    // the companion script calls pcOriginalLoaded(name, base64) when it runs.
+    const pendingLocalDownloads = {};
+
+    function pcOriginalLoaded(name, base64) {
+        const pending = pendingLocalDownloads[name];
+        if (!pending) return;
+        delete pendingLocalDownloads[name];
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        triggerBlobDownload(new Blob([bytes], { type: 'image/jpeg' }), pending.filename);
+    }
+
+    function downloadOriginalFromScript(meta, filename, fallback) {
+        const name = decodeURIComponent(meta.original.split('/').pop());
+        pendingLocalDownloads[name] = { filename: filename };
+        const script = document.createElement('script');
+        // The script runs BEFORE its load event: if the entry still exists
+        // then, it was missing, truncated or did not work.
+        const failed = () => {
+            script.remove();
+            if (pendingLocalDownloads[name]) {
+                delete pendingLocalDownloads[name];
+                fallback();
+            }
+        };
+        script.onload = failed;
+        script.onerror = failed;
+        script.src = meta.original + '.js';
+        document.head.appendChild(script);
+    }
+
+    function downloadCurrentImage() {
+        // Full-size original when the gallery embeds it ("originals" option),
+        // otherwise the copy displayed in the viewer.
+        const meta = galleryMeta[currentIndex];
+        const url = meta.original || galleryImages[currentIndex];
+        const filename = meta.originalFilename || meta.filename;
+
+        // Since a widely adopted security fix (CVE-2019-11730), Firefox and
+        // Chrome treat a page opened via file:// (double-click directly on
+        // index.html, without a web server) as having an "opaque" origin:
+        // fetch(), XMLHttpRequest AND reading a <canvas> that loaded the image
+        // are blocked identically in both browsers to access a neighbouring
+        // file - none of these three routes allows getting around that in
+        // JavaScript. We therefore detect it upfront rather than failing
+        // silently afterwards.
+        // Two routes remain possible without reading the file: a neighbouring
+        // <script src> tag (never blocked in file://, see below), and an
+        // <a download> link, which browsers honour or not for a neighbouring
+        // file (Chromium ignores it in file://; reported with no effect by a
+        // Firefox user) - hence the companion file.
+        if (window.location.protocol === 'file:') {
+            // Full-size original: its .js companion file (see
+            // htmlgallery._write_download_script) allows a real download - exact
+            // name, browser dialog box - even without a web server, and whatever
+            // the browser.
+            if (meta.original) {
+                downloadOriginalFromScript(meta, filename, () => openDownloadLink(url, filename));
+                return;
+            }
+            openDownloadLink(url, filename);
+            return;
+        }
+
+        // The native HTML "download" attribute is also unreliable once served
+        // over HTTP(S) depending on the browsers (priority given to the
+        // Content-Disposition header, etc.): we therefore convert to a blob
+        // before triggering the download, which gets around this variability
+        // (see CHANGELOG.md).
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('fetch a echoue');
+                return response.blob();
+            })
+            .then(blob => triggerBlobDownload(blob, filename))
+            .catch(() => {
+                // An original (possibly a RAW) is not what is displayed in the
+                // viewer: redrawing it on a canvas would give the reduced copy under
+                // the original's name.
+                if (meta.original) {
+                    window.open(url, '_blank');
+                    return;
+                }
+                // Unlikely fallback if fetch() fails nonetheless over HTTP(S): the
+                // image is already loaded on screen (<img>), so we redraw it on a
+                // hidden canvas to extract a blob, without a new network request.
+                try {
+                    const img = document.getElementById('lightbox-img');
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    canvas.toBlob(blob => {
+                        if (blob) triggerBlobDownload(blob, filename);
+                        else window.open(url, '_blank');
+                    }, 'image/jpeg', 0.92);
+                } catch (e) {
+                    // Last fallback: at least open the image.
+                    window.open(url, '_blank');
+                }
+            });
+    }
+
+    function updateLightbox() {
+        const url = galleryImages[currentIndex];
+        const meta = galleryMeta[currentIndex];
+
+        currentZoom = 100;
+        baseWidth = 0;
+        baseHeight = 0;
+
+        const img = document.getElementById('lightbox-img');
+        img.style.width = '';
+        img.style.height = '';
+        img.src = url;
+
+        document.getElementById('lightbox-filename').textContent = meta.filename;
+        document.getElementById('lightbox-counter').textContent =
+            (currentIndex + 1) + ' / ' + galleryImages.length;
+
+        const dl = document.getElementById('lightbox-download');
+        dl.href = meta.original || url;
+        dl.download = meta.originalFilename || meta.filename;
+        const dlLabel = meta.original ? downloadOriginalLabel : downloadLabel;
+        dl.title = dlLabel;
+        dl.setAttribute('aria-label', dlLabel);
+
+        document.getElementById('info-filename').textContent = meta.filename;
+        document.getElementById('info-resolution').textContent = meta.resolution;
+        document.getElementById('info-size').textContent = meta.size;
+        document.getElementById('info-date').textContent = meta.date;
+
+        document.getElementById('lightbox-zoom-level').textContent = '100 %';
+        document.getElementById('lightbox').classList.remove('zoomed');
+    }
+
+    // Measures the "fit to screen" size (100%) once the image has actually
+    // loaded, to zoom in real dimensions (width/height) rather than a
+    // simple transform: scale() - needed so that the overflow beyond 100%
+    // is really scrollable: transform only changes the visual rendering,
+    // never the layout size taken into account by overflow (see
+    // CHANGELOG.md).
+    document.getElementById('lightbox-img').addEventListener('load', function() {
+        this.style.width = '';
+        this.style.height = '';
+        baseWidth = this.clientWidth;
+        baseHeight = this.clientHeight;
+        applyZoom();
+    });
+
+    function applyZoom() {
+        const img = document.getElementById('lightbox-img');
+        if (currentZoom === 100 || !baseWidth) {
+            img.style.width = '';
+            img.style.height = '';
+            img.style.maxWidth = '';
+            img.style.maxHeight = '';
+            panX = 0;
+            panY = 0;
+        } else {
+            // max-width/max-height (CSS, for the 100% fit) otherwise silently cap
+            // the size actually rendered, whatever the width/height set below -
+            // nothing would then really overflow, and there would be nothing to
+            // move.
+            img.style.maxWidth = 'none';
+            img.style.maxHeight = 'none';
+            img.style.width = Math.round(baseWidth * currentZoom / 100) + 'px';
+            img.style.height = Math.round(baseHeight * currentZoom / 100) + 'px';
+            clampPan();
+        }
+        applyPan();
+        img.classList.toggle('zoomed', currentZoom > 100);
+    }
+
+    // Bounds the movement so that the zoomed image can never leave the
+    // window completely (in each dimension where it actually exceeds the
+    // frame - otherwise, no movement allowed in that dimension, the image
+    // already fitting entirely).
+    function clampPan() {
+        const img = document.getElementById('lightbox-img');
+        const lightbox = document.getElementById('lightbox');
+        const maxPanX = Math.max(0, (img.offsetWidth - lightbox.clientWidth) / 2);
+        const maxPanY = Math.max(0, (img.offsetHeight - lightbox.clientHeight) / 2);
+        panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+        panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+    }
+
+    function applyPan() {
+        const img = document.getElementById('lightbox-img');
+        img.style.transform = (panX !== 0 || panY !== 0) ? `translate(${panX}px, ${panY}px)` : '';
+    }
+
+    function setZoom(value) {
+        currentZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+        applyZoom();
+        document.getElementById('lightbox-zoom-level').textContent = currentZoom + ' %';
+    }
+
+    function zoomIn() { setZoom(currentZoom + ZOOM_STEP); }
+    function zoomOut() { setZoom(currentZoom - ZOOM_STEP); }
+    function zoomReset() { setZoom(100); }
+
+    // Drag-and-drop to move the zoomed image (mouse, touch and stylus
+    // unified via Pointer Events). Only acts if zoomed beyond 100% -
+    // otherwise the image already fits entirely, nothing to move.
+    (function() {
+        const img = document.getElementById('lightbox-img');
+
+        img.addEventListener('pointerdown', function(e) {
+            if (currentZoom <= 100) return;
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            panStartX = panX;
+            panStartY = panY;
+            img.setPointerCapture(e.pointerId);
+            img.classList.add('dragging');
+            e.preventDefault();
+        });
+
+        img.addEventListener('pointermove', function(e) {
+            if (!isDragging) return;
+            panX = panStartX + (e.clientX - dragStartX);
+            panY = panStartY + (e.clientY - dragStartY);
+            clampPan();
+            applyPan();
+        });
+
+        function stopDragging() {
+            isDragging = false;
+            img.classList.remove('dragging');
+        }
+        img.addEventListener('pointerup', stopDragging);
+        img.addEventListener('pointercancel', stopDragging);
+    })();
+
+    function toggleInfo() {
+        document.getElementById('lightbox-info').classList.toggle('open');
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    function goToPage() {
+        const input = document.getElementById('goto-page-input');
+        let n = parseInt(input.value, 10);
+        if (isNaN(n)) return;
+        n = Math.max(1, Math.min(totalPages, n));
+        window.location.href = pageUrl(n);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (!document.getElementById('lightbox').classList.contains('open')) return;
+        if (document.activeElement && document.activeElement.id === 'goto-page-input') {
+            if (e.key === 'Enter') goToPage();
+            return;
+        }
+        if (e.key === 'Escape') closeLightbox();
+        else if (e.key === 'ArrowLeft') showDelta(-1);
+        else if (e.key === 'ArrowRight') showDelta(1);
+        else if (e.key === 'i' || e.key === 'I') toggleInfo();
+        else if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        else if (e.key === '+' || e.key === '=') zoomIn();
+        else if (e.key === '-' || e.key === '_') zoomOut();
+        else if (e.key === '0') zoomReset();
+    });
+
+    // Mouse wheel, only over the viewer (never over the page/browser in
+    // the background, thanks to preventDefault):
+    // - Ctrl/Alt/Cmd + wheel: zooms, like the browser's native gesture
+    //   but limited to the displayed photo alone (also prevents the page's
+    //   native zoom from triggering in addition).
+    // - Wheel alone: goes to the next/previous photo - except when already
+    //   zoomed beyond 100%, where the wheel directly moves the enlarged
+    //   image (panX/panY, see applyPan) rather than changing photo.
+    document.getElementById('lightbox').addEventListener('wheel', function(e) {
+        const now = Date.now();
+        if (e.ctrlKey || e.metaKey || e.altKey) {
+            e.preventDefault();
+            if (now - lastWheelAction < WHEEL_THROTTLE_MS) return;
+            lastWheelAction = now;
+            if (e.deltaY < 0) zoomIn(); else zoomOut();
+            return;
+        }
+        if (currentZoom > 100) {
+            e.preventDefault();
+            panX -= e.deltaX;
+            panY -= e.deltaY;
+            clampPan();
+            applyPan();
+            return;
+        }
+        e.preventDefault();
+        if (now - lastWheelAction < WHEEL_THROTTLE_MS) return;
+        lastWheelAction = now;
+        if (e.deltaY > 0) showDelta(1); else showDelta(-1);
+    }, { passive: false });
+
+    // Arrival from the previous/next page (see showDelta above): reopens
+    // the viewer directly at the right photo rather than on the grid, for a
+    // smooth sequence between two pages. Cleans the URL afterwards so that a
+    // manual refresh does not open the viewer unexpectedly.
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('open')) return;
+        const raw = params.get('open');
+        const index = raw === 'last' ? galleryImages.length - 1 : parseInt(raw, 10);
+        if (!isNaN(index) && index >= 0 && index < galleryImages.length) {
+            openLightbox({ preventDefault() {} }, index);
+            // Wrap-around over the whole gallery (last photo -> first page, or the
+            // reverse): warn the user, otherwise the page change might seem
+            // unexpected.
+            const wrap = params.get('wrap');
+            if (wrap === 'fwd') showToast(@@wrap_forward_js@@);
+            else if (wrap === 'back') showToast(@@wrap_backward_js@@);
+        }
+        history.replaceState(null, '', window.location.pathname);
+    })();
+</script>
+</body>
+</html>

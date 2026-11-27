@@ -1,0 +1,17 @@
+# Cargo workspace of planche-contact-windows: the two Rust programs of the
+# project. The WinUI 3 application (C#) lives in app/ and is not built by Cargo.
+[workspace]
+resolver = "2"
+members = ["engine"]
+
+[workspace.package]
+version = "5.3.0"
+edition = "2021"
+license = "GPL-3.0-only"
+repository = "https://github.com/gillesmagneville/planche-contact-windows"
+
+[profile.release]
+# The engine decodes and resizes many large images: the default optimisation
+# level, plus thin LTO, keeps the executable fast without a long link.
+lto = "thin"
+codegen-units = 4
