@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Planche-Contact - Manual completo</title>
+    <style>
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.65;
+            background: #f8f9fa;
+        }
+        h1, h2, h3 { color: #1a1a1a; }
+        h1 { font-size: 2.2em; border-bottom: 3px solid #333; padding-bottom: 10px; }
+        h2 { font-size: 1.6em; margin-top: 45px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+        h3 { font-size: 1.25em; margin-top: 30px; }
+        code, pre {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "DejaVu Sans Mono", monospace;
+        }
+        pre {
+            padding: 14px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background: #e9ecef; }
+        .note {
+            background: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 14px 18px;
+            margin: 25px 0;
+        }
+        ul { padding-left: 22px; }
+        a { color: #0066cc; }
+    </style>
+</head>
+<body>
+
+<h1>Planche-Contact — Manual completo</h1>
+
+<h2>1. Presentación</h2>
+<p><strong>Planche-Contact</strong> es una herramienta ligera y rápida para generar hojas de contacto fotográficas de alta calidad (300 ppp) a partir de una carpeta de fotos, sin base de datos ni software pesado.</p>
+<p>Existe en dos formas:</p>
+<ul>
+    <li><strong>Ventana de Windows</strong> (<code>PlancheContact.exe</code>, desde el menú Inicio o la entrada «Abrir en Planche-Contact» del Explorador de archivos)</li>
+    <li><strong>Línea de comandos</strong> (<code>engine\planche-contact-engine.exe generate</code>, en la carpeta de instalación)</li>
+</ul>
+<p>A partir de la misma carpeta de fotos, la herramienta puede producir simultáneamente:</p>
+<ul>
+    <li><strong>hojas de contacto</strong> en formato JPEG (una o varias páginas);</li>
+    <li>un <strong>PDF</strong> que reúne todas las hojas (las leyendas, el título y los números de página se pueden seleccionar, copiar y buscar en cualquier lector de PDF);</li>
+    <li>una <strong>galería HTML</strong> paginada y autónoma, con miniaturas en las que se puede hacer clic para abrir cada foto en un visor a pantalla completa: nombre del archivo y número de página mostrados, navegación entre las fotos de la página (teclado o flechas ‹ ›), salto directo a otra página, zoom del 50 % al 200 %, descarga de la foto mostrada (o del original a tamaño completo, con la opción «Originales a tamaño completo en la galería»), información técnica (resolución original, tamaño, fecha de captura) y cambio a pantalla completa;</li>
+    <li>un <strong>índice CSV</strong> que lista cada foto con su número.</li>
+</ul>
+<div class="note">
+<strong>En Windows</strong>, la primera vez que ejecute el instalador, es muy probable que Windows muestre una pantalla azul «Windows ha protegido su PC» (SmartScreen). Esto es normal para un programa pequeño sin firma digital — no es un indicio de software malicioso. Haga clic en <strong>Más información</strong> y luego en <strong>Ejecutar de todos modos</strong> para continuar.
+</div>
+
+<h2>2. Formatos de fotos admitidos</h2>
+<table>
+<tr><th>Tipo</th><th>Extensiones</th></tr>
+<tr><td>Formatos estándar</td><td><code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.tif</code>, <code>.tiff</code>, <code>.bmp</code>, <code>.webp</code>, <code>.heic</code>, <code>.heif</code></td></tr>
+<tr><td>Formatos RAW</td><td><code>.cr2</code>, <code>.cr3</code> (Canon), <code>.nef</code> (Nikon), <code>.dng</code>, <code>.arw</code> (Sony)</td></tr>
+</table>
+<div class="note">
+La compatibilidad con archivos RAW se basa en la biblioteca LibRaw, integrada en el motor (no hay nada más que instalar). Para acelerar el proceso, Planche-Contact usa primero la vista previa JPEG que la cámara incrustó en el archivo RAW; el revelado completo (más lento) solo se realiza si esa vista previa falta o es demasiado pequeña para el uso requerido (miniatura, hoja, imagen «a tamaño completo» de la galería). Los archivos HEIC/HEIF se listan, pero todavía no se pueden leer: se indican en el registro y no aparecen en las hojas.
+</div>
+<p>La orientación de las fotos (vertical u horizontal) siempre se respeta tal como la indica la cámara, en las tres salidas (hojas, PDF, galería HTML) — no se necesita ningún ajuste manual, incluso para fotos tomadas con la cámara en posición vertical.</p>
+
+<h2>3. La ventana de Planche-Contact</h2>
+
+<h3>3.1 Ventana principal</h3>
+<p>La ventana se abre con el tamaño de su contenido, reducido si es necesario para caber en la pantalla (sigue siendo redimensionable normalmente). En una pantalla pequeña, el formulario de la pestaña Generación se desplaza (barra de desplazamiento), mientras que la parte inferior de la ventana — los botones «Iniciar generación», «Ajustes avanzados…», «Restablecer», «Ver resultados» y «Salir», la barra de progreso y el registro — permanece siempre visible. Ofrece tres pestañas: <strong>Generación</strong>, <strong>Ayuda</strong> y <strong>Acerca de</strong>. La pestaña Ayuda abre este manual en el navegador predeterminado.</p>
+
+<h3>3.2 Pestaña «Generación»</h3>
+
+<table>
+<tr><th>Campo / Opción</th><th>Descripción</th></tr>
+<tr><td><strong>Título del proyecto</strong></td><td>Texto mostrado en grande en la parte superior de cada hoja. En la misma línea que el nombre del autor.</td></tr>
+<tr><td><strong>Nombre del autor</strong></td><td>Nombre mostrado debajo del título (en negrita, más pequeño).</td></tr>
+<tr><td><strong>Carpeta de entrada</strong></td><td>Carpeta que contiene las fotografías a procesar (obligatoria). Muestra automáticamente una vista previa de las fotos de la carpeta (véase §3.5).</td></tr>
+<tr><td><strong>Carpeta de salida</strong></td><td>Carpeta donde se crearán los resultados. Por defecto: <code>Portfolio/</code> dentro de la carpeta de entrada. Se crea automáticamente si aún no existe.</td></tr>
+<tr><td><strong>Búsqueda recursiva</strong></td><td>Si está marcada, también analiza todas las subcarpetas.</td></tr>
+<tr><td><strong>Elegir subcarpetas...</strong></td><td>Disponible cuando «Búsqueda recursiva» está marcada: abre una ventana que lista todas las carpetas que contienen fotos («Carpeta principal» primero, después las subcarpetas, cada una con su número de fotos). Marque solo las carpetas que desea incluir («Marcar todo» / «Desmarcar todo»): solo se procesan las fotos situadas <em>directamente</em> en una carpeta marcada, de modo que marcar <code>Paris</code> no marca <code>Paris/Louvre</code>. Las hojas, el PDF, la galería HTML, el índice CSV y la vista previa siguen todos la selección, que se muestra junto al botón («3 de 5 carpeta(s)»). La elección se restablece cuando cambia la carpeta de entrada o cuando se desmarca «Búsqueda recursiva».</td></tr>
+<tr><td><strong>Imágenes por hoja</strong></td><td>Número de miniaturas por página (de 8 a 48, en pasos de 4). En la misma línea que los tres campos siguientes.</td></tr>
+<tr><td><strong>Formato de la hoja</strong></td><td>Formato de papel: A5, A4, A3, A2 o Letter.</td></tr>
+<tr><td><strong>Marca de agua (texto)</strong></td><td>Texto repetido en mosaico sobre todas las imágenes (hojas, PDF y galería HTML) — se añade automáticamente un «©» si no está presente.</td></tr>
+<tr><td><strong>Orientación de la marca de agua</strong></td><td>
+    <ul>
+        <li><strong>Horizontal</strong>: texto horizontal</li>
+        <li><strong>Diagonal (sentido horario)</strong>: texto inclinado en el sentido de las agujas del reloj</li>
+        <li><strong>Diagonal (sentido antihorario)</strong>: texto inclinado en sentido contrario</li>
+    </ul>
+</td></tr>
+<tr><td><strong>Opacidad de la marca de agua</strong></td><td>Control deslizante de 0 a 100 % (por defecto: 40 %). Se aplica de forma idéntica a las hojas, el PDF y la galería HTML.</td></tr>
+<tr><td><strong>Tema</strong></td><td>Claro (por defecto), Oscuro, Neutro o Sistema: tema gráfico aplicado de forma idéntica a las hojas, al PDF y a la galería HTML (detalles y colores personalizados: véase §3.3).</td></tr>
+<tr><td><strong>Opciones de exportación</strong></td><td>Casillas: Generar PDF, Generar galería HTML, Generar índice CSV.</td></tr>
+<tr><td><strong>Imágenes por página</strong></td><td>Número de miniaturas por página de la galería HTML (de 12 a 64, en pasos de 4, por defecto: 48). En la misma línea que la casilla «Generar galería HTML».</td></tr>
+<tr><td><strong>Originales a tamaño completo en la galería</strong></td><td>Casilla, desmarcada por defecto, a la derecha del control «Imágenes por página» (atenuada si «Generar galería HTML» está desmarcada). Añade a la galería las fotos en resolución completa: los archivos JPEG, PNG, TIFF... se copian sin pérdida, mientras que los <strong>archivos RAW se convierten a JPEG de tamaño completo</strong> (misma resolución, calidad 95, EXIF conservado cuando la vista previa incrustada en el RAW lo incluye) con el mismo nombre y la extensión <code>.jpg</code>: ningún archivo RAW se coloca nunca en la galería. El botón de descarga ⇩ del visor entrega entonces la foto tal como se tomó, a resolución completa y con su nombre, y no la copia reducida (2000 px) que se ve en pantalla. La galería pesa mucho más (cada original va además acompañado de un archivo anexo de alrededor del 133 % de su tamaño, que sirve para descargar con doble clic; es inútil en un servidor web y puede borrarse antes de subirla). <strong>Los originales no llevan la marca de agua</strong> (solo las copias mostradas): aparece una advertencia en el registro si también se pide una marca de agua.</td></tr>
+</table>
+
+<p>Si ninguno de los campos Título / Autor / Marca de agua está rellenado, el encabezado de las hojas muestra por defecto el nombre de la carpeta de entrada (sin su ruta completa), para evitar una hoja completamente anónima.</p>
+
+<h3>3.3 Diseño, leyendas y tema (ajustes avanzados)</h3>
+<p>El botón «Ajustes avanzados…» de la ventana principal abre una ventana aparte que permite personalizar con detalle el diseño, las leyendas y los colores del tema gráfico de las hojas de contacto (el tema en sí se elige en la ventana principal, véase §3.2) — mientras no se toque, las hojas muestran el nombre del archivo bajo cada foto (ajuste por defecto, que se puede desactivar aquí). Esta ventana se cierra con el botón «Cerrar» o con la tecla Esc; los ajustes se conservan entre dos aperturas. En una pantalla pequeña su contenido se desplaza (barra de desplazamiento) y el botón «Cerrar» siempre permanece visible.</p>
+
+<p><strong>Diseño</strong></p>
+<table>
+<tr><th>Ajuste</th><th>Descripción</th></tr>
+<tr><td><strong>Plantilla</strong></td><td>Cuadrícula (comportamiento por defecto), Horizontal, Vertical, Miniaturas grandes (reduce automáticamente el número de fotos por página para garantizar miniaturas grandes), Libre (columnas/filas elegidas manualmente).</td></tr>
+<tr><td><strong>Orientación</strong></td><td>Vertical u Horizontal para la propia página.</td></tr>
+<tr><td><strong>Ajuste de la foto</strong></td><td>Cómo se adapta cada foto a su celda: Foto completa (<code>contain</code>; comportamiento por defecto, sin recorte: la foto completa con sus proporciones) o Rellenar (<code>cover</code>; la foto se recorta en un cuadrado centrado para llenar toda la celda, sin margen vacío). Se aplica a las hojas y al PDF; la galería HTML conserva las proporciones de las fotos. Una foto más pequeña que su celda nunca se amplía.</td></tr>
+<tr><td><strong>Título / Autor</strong></td><td>Posición del título y del autor en la parte superior de la hoja: A la izquierda, Centrado (comportamiento por defecto), A la derecha u Oculto. Cada uno tiene su propia posición y permanecen uno debajo del otro, alineados con los márgenes de la página; «Oculto» suprime la línea y la cuadrícula sube en consecuencia. Un texto demasiado largo se reduce para caber en el ancho de la página. También se aplica al encabezado de la galería HTML.</td></tr>
+<tr><td><strong>Numerar las hojas</strong></td><td>Muestra «Hoja X/Y» al pie de cada hoja y del PDF (marcado por defecto). No afecta a la galería HTML, que conserva su propia paginación. Las dos líneas siguientes se muestran siempre, en las hojas y en el PDF: «Hoja generada por Planche-Contact» y luego «Desarrollado por Gilles MAGNEVILLE, bajo la licencia GNU GPL v3» (la misma que en la galería HTML). El pie ocupa unos 11 mm: si el margen elegido es menor, el margen inferior se eleva a ese valor para que la cuadrícula nunca lo invada.</td></tr>
+<tr><td><strong>Centrado</strong></td><td>La cuadrícula de fotos siempre está centrada en la página, horizontalmente y verticalmente bajo el encabezado; sin leyendas, cada foto también está centrada en su celda. Todas las hojas de una generación — incluida la última, incompleta — colocan sus fotos en los mismos lugares.</td></tr>
+<tr><td><strong>Márgenes / Espaciado</strong></td><td>En milímetros, alrededor de la página y entre las miniaturas. El margen inferior nunca baja de ~11 mm (espacio del pie de la hoja).</td></tr>
+<tr><td><strong>Columnas / Filas</strong></td><td>Solo para la plantilla Libre (0 = automático).</td></tr>
+</table>
+
+<p><strong>Leyendas por foto</strong></p>
+<p>Puede mostrarse una leyenda debajo (o encima) de cada miniatura, construida a partir de los metadatos EXIF de la foto:</p>
+<ul>
+<li>Nombre de archivo, fecha de la toma, cámara (marca/modelo), objetivo, distancia focal, distancia focal equivalente a 35&nbsp;mm, apertura, velocidad de obturación, sensibilidad ISO, dimensiones de la imagen, coordenadas GPS.</li>
+<li>La posición, el área reservada (mm), el número de líneas, el tamaño de fuente y la alineación son todos ajustables.</li>
+<li>Un texto demasiado ancho para la miniatura pasa automáticamente a la línea siguiente, entre campos: no se corta ninguna información. Se añaden líneas si hace falta, y las miniaturas se reducen ligeramente para dejarles sitio.</li>
+<li>Un metadato ausente en una foto concreta (por ejemplo, sin datos GPS) simplemente se omite de su leyenda, sin provocar nunca un error.</li>
+</ul>
+<div class="note">
+Las coordenadas GPS, si están activadas, se muestran en texto claro en la hoja generada — actívela solo si realmente desea compartir esa información (se muestra una advertencia al pasar el cursor sobre la casilla correspondiente).
+</div>
+
+<p><strong>Tema gráfico</strong></p>
+<p>Cuatro modos, elegidos en la lista «Tema» de la ventana principal (véase §3.2) y aplicados de forma idéntica a las hojas JPEG, al PDF y a la galería HTML: <strong>Claro</strong> (por defecto), <strong>Oscuro</strong>, <strong>Neutro</strong> y <strong>Sistema</strong> (para la galería HTML, sigue el navegador de cada visitante, con un pequeño botón discreto que le permite cambiar él mismo entre claro y oscuro; como una hoja JPEG o un PDF es una imagen fija que no puede seguir el tema del sistema, permanecen claros en este modo). Este bloque avanzado solo contiene los colores de fondo, texto, acento y borde, que pueden personalizarse individualmente (formato hexadecimal <code>#rrggbb</code>) para sustituir los del tema elegido. En la galería HTML, el pequeño botón ◐ (en el pie de página) cambia la página del tema elegido a su opuesto claro/oscuro; un segundo clic vuelve exactamente al tema elegido. La elección del visitante se recuerda en su navegador, pero solo para la galería actual: una galería regenerada siempre parte de nuevo del tema elegido en la ventana principal.</p>
+
+<p><strong>Guardar / Cargar un perfil</strong></p>
+<p>Todos estos ajustes (diseño, leyendas y tema) pueden guardarse en un archivo JSON reutilizable (botón «Guardar perfil…»), y volver a cargarse más tarde (botón «Cargar perfil…») — útil para aplicar los mismos ajustes a varios proyectos, o para compartirlos. Este mismo archivo puede pasarse a la línea de comandos mediante <code>--profile</code> (véase §4.1).</p>
+
+<h3>3.4 Vista previa de la hoja</h3>
+<p>El botón «Vista previa de la hoja…», en la ventana de ajustes avanzados, muestra, en una ventana dedicada, la hoja de contacto tal y como se producirá realmente — diseño, leyendas, tema y marca de agua incluidos — a partir de las primeras fotos de la carpeta de entrada (el mismo número que colocaría la generación real en esa primera página). Útil para comprobar el efecto de un ajuste antes de lanzar una generación completa, especialmente en una carpeta con muchas fotos.</p>
+
+<h3>3.5 Vista previa de la carpeta de entrada</h3>
+<p>En cuanto se indica una carpeta de entrada válida (al iniciar, si ya se había guardado una carpeta, o tras escribirla/seleccionarla), una franja de vista previa muestra automáticamente las miniaturas de las fotos que contiene, en páginas de 10, con una paginación numerada (<code>← Anterior 1 … 4 5 6 … 19 Siguiente →</code>). El análisis y la generación de miniaturas se realizan en segundo plano: la interfaz no se congela, ni siquiera con una carpeta que contenga cientos de fotos.</p>
+
+<h3>3.6 Elección de carpetas</h3>
+<p>El botón «Elegir...» (carpeta de entrada o de salida) abre el cuadro de diálogo estándar de Windows para elegir una carpeta. La ruta también se puede escribir o pegar directamente en el campo: la vista previa se actualiza en cuanto la carpeta existe.</p>
+
+<h3>3.7 Botón «Ver resultados»</h3>
+<p>Tras una generación correcta, este botón desplegable permite abrir directamente los resultados con las aplicaciones predeterminadas del sistema, sin agrandar la ventana principal:</p>
+<table>
+<tr><th>Opción</th><th>Acción</th></tr>
+<tr><td><strong>Hojas de contacto</strong></td><td>Abre la carpeta <code>planches/</code> en el gestor de archivos predeterminado.</td></tr>
+<tr><td><strong>PDF del portafolio</strong></td><td>Abre el PDF con el visor predeterminado.</td></tr>
+<tr><td><strong>Galería HTML</strong></td><td>Abre la galería en el navegador predeterminado.</td></tr>
+<tr><td><strong>Índice CSV</strong></td><td>Abre el archivo CSV con la aplicación predeterminada (normalmente una hoja de cálculo).</td></tr>
+</table>
+<p>Cada opción solo se activa si el elemento correspondiente se generó realmente (según las casillas marcadas durante la generación). Si no hay ninguna aplicación predeterminada configurada en el sistema para un tipo de archivo dado, aparece una ventana de aviso con una sugerencia de aplicación para instalar.</p>
+
+<h3>3.8 Pestañas «Ayuda» y «Acerca de», preferencias</h3>
+<p>La pestaña «Ayuda» abre este manual en el navegador predeterminado. La pestaña «Acerca de» muestra el número de versión, la fecha de compilación, una breve descripción, el autor, la licencia (<strong>GNU GPL v3</strong>) y un enlace al repositorio GitHub del proyecto. El botón con forma de engranaje, a la derecha de las pestañas, abre las <strong>Preferencias</strong>: la elección del idioma.</p>
+<div class="note">
+Un cambio de idioma solo se aplica a los textos de la ventana tras reiniciar la aplicación; se aplica de inmediato a los mensajes de la generación y a toda galería HTML generada después — véanse §4 y §5.
+</div>
+
+<h3>3.9 Apertura desde el Explorador de archivos (menú contextual)</h3>
+<p>El instalador añade una entrada <strong>«Abrir en Planche-Contact»</strong> al menú del clic derecho del Explorador de archivos. Aparece en una <strong>carpeta</strong>, en el <strong>fondo de una carpeta abierta</strong> y en una <strong>selección de fotos</strong> (solo formatos admitidos; se pueden mezclar fotos y carpetas). En Windows 11 está en «Mostrar más opciones»; en Windows 10, en el menú habitual del clic derecho. Se instala para el usuario actual, sin derechos de administrador.</p>
+<p>La ventana se abre con lo seleccionado:</p>
+<ul>
+    <li>una <strong>carpeta sola</strong> pasa a ser la carpeta de entrada, y se procesan todas sus fotos (la búsqueda recursiva queda a su elección);</li>
+    <li>una <strong>selección de fotos</strong> (o de varias carpetas, o una mezcla) se procesa tal cual: la carpeta de entrada es la carpeta común de los elementos seleccionados, y solo se procesan las fotos seleccionadas, más las fotos situadas directamente en cada carpeta seleccionada (no las de sus subcarpetas). Una línea bajo la carpeta de entrada indica el número de fotos recibidas, con un botón «Usar toda la carpeta» para volver a la carpeta completa;</li>
+    <li>la carpeta de salida es la carpeta seleccionada o, para una selección de fotos, la carpeta que las contiene (modificable como de costumbre). Los resultados se crean allí: hojas en <code>planches/</code>, galería en <code>gallery/</code>, y el PDF, el CSV y el registro al lado. Una nueva generación los sustituye sin contarlos como fotos.</li>
+</ul>
+<p>Cada apertura inicia su propia ventana.</p>
+<div class="note">
+La selección se transmite al programa mediante un archivo de texto temporal (<code>--paths-from</code>, véase §4.1), así que una selección muy grande no supone ningún problema. El desinstalador quita la entrada del menú.
+</div>
+
+<h2>4. Interfaz de línea de comandos (CLI)</h2>
+
+<h3>4.1 Opciones principales</h3>
+
+<table>
+<tr><th>Opción</th><th>Descripción</th><th>Ejemplo</th></tr>
+<tr><td><code>-i, --input</code></td><td>Carpeta de entrada (obligatoria)</td><td><code>-i C:\Fotos\Viaje</code></td></tr>
+<tr><td><code>-o, --output</code></td><td>Carpeta de salida</td><td><code>-o ./Resultados</code></td></tr>
+<tr><td><code>-n, --num</code></td><td>Número de imágenes por hoja</td><td><code>-n 16</code></td></tr>
+<tr><td><code>--format</code></td><td>Formato de página (A5, A4, A3, A2, Letter)</td><td><code>--format A3</code></td></tr>
+<tr><td><code>--title</code></td><td>Título del proyecto</td><td><code>--title "Viaje 2025"</code></td></tr>
+<tr><td><code>--author</code></td><td>Nombre del autor</td><td><code>--author "Abel GEZ"</code></td></tr>
+<tr><td><code>--watermark</code></td><td>Texto de la marca de agua</td><td><code>--watermark "Abel GEZ"</code></td></tr>
+<tr><td><code>--watermark-orientation</code></td><td>Orientación de la marca de agua</td><td><code>--watermark-orientation "Diagonale horaire"</code></td></tr>
+<tr><td><code>--watermark-opacity</code></td><td>Opacidad de la marca de agua, de 0 a 100 (por defecto: 40)</td><td><code>--watermark-opacity 60</code></td></tr>
+<tr><td><code>--pdf</code></td><td>Generar un PDF</td><td></td></tr>
+<tr><td><code>--html</code></td><td>Generar una galería HTML</td><td></td></tr>
+<tr><td><code>--csv</code></td><td>Generar un índice CSV</td><td></td></tr>
+<tr><td><code>-r, --recursive</code></td><td>Análisis recursivo de las subcarpetas</td><td></td></tr>
+<tr><td><code>--include-dir</code></td><td>Procesar solo las fotos situadas directamente en esta subcarpeta (ruta relativa a la carpeta de entrada, <code>.</code> para la propia carpeta de entrada). Se puede repetir; implica la búsqueda recursiva. Sin esta opción se procesan todas las fotos.</td><td><code>--include-dir Paris --include-dir "Verano 2026"</code></td></tr>
+<tr><td><code>--include-dirs-file</code></td><td>Archivo de texto (UTF-8) con las subcarpetas a procesar, una por línea (equivale a varios <code>--include-dir</code>)</td><td><code>--include-dirs-file carpetas.txt</code></td></tr>
+<tr><td><code>--files-from</code></td><td>Archivo de texto (UTF-8) con las fotos a procesar, una por línea (ruta absoluta o relativa a la carpeta de entrada); solo se procesan estas fotos. Es lo que usa el menú contextual del gestor de archivos.</td><td><code>--files-from fotos.txt</code></td></tr>
+<tr><td><code>--sort</code></td><td>Orden de las fotos: <code>date</code> (EXIF) o <code>name</code></td><td><code>--sort name</code></td></tr>
+<tr><td><code>--html-per-page</code></td><td>Número de imágenes por página en la galería HTML (por defecto: 48)</td><td><code>--html-per-page 60</code></td></tr>
+<tr><td><code>--html-originals</code></td><td>Añadir a la galería HTML los originales a tamaño completo (el botón de descarga los entrega; los archivos RAW se convierten a JPEG, ningún RAW se coloca en la galería; la galería pesa mucho más, y los originales no llevan la marca de agua)</td><td><code>--html --html-originals</code></td></tr>
+<tr><td><code>--language</code></td><td>Idioma de los mensajes y de la galería HTML generada: <code>system</code> (por defecto), <code>en</code>, <code>fr</code>, <code>de</code>, <code>es</code></td><td><code>--language es</code></td></tr>
+<tr><td><code>--profile</code></td><td>Archivo de perfil JSON (diseño, leyendas, tema — véase §3.3), generado con el botón «Guardar perfil…» de la interfaz gráfica, o escrito/editado a mano. Un archivo ausente o no válido recurre silenciosamente a los valores por defecto.</td><td><code>--profile mi-perfil.json</code></td></tr>
+</table>
+<p>La propia ventana acepta <code>--paths-from ARCHIVO</code> (una ruta de carpeta o de foto por línea, UTF-8; un archivo llamado <code>planche-contact-selection-*.txt</code> se elimina una vez leído) o rutas indicadas directamente: <code>PlancheContact.exe C:\Fotos\Viaje</code>. Es lo que llama el menú contextual.</p>
+<div class="note">
+Los valores de <code>--watermark-orientation</code> permanecen internamente en francés independientemente del <code>--language</code> elegido (<code>"Horizontal"</code>, <code>"Diagonale horaire"</code>, <code>"Diagonale anti-horaire"</code>) — es el contrato interno del motor y no tiene relación con el idioma de visualización.
+</div>
+
+<h3>4.2 Ejemplos completos</h3>
+
+<pre><code>rem Desde la carpeta de instalación: %LOCALAPPDATA%\Programs\Planche-Contact
+cd /d "%LOCALAPPDATA%\Programs\Planche-Contact"
+
+rem Generación sencilla
+engine\planche-contact-engine.exe generate -i C:\Fotos\2025 -o C:\Salida --pdf --html
+
+rem Galería HTML con 24 imágenes por página en lugar de las 48 predeterminadas
+engine\planche-contact-engine.exe generate -i C:\Fotos\2025 -o C:\Salida --html --html-per-page 24
+
+rem Versión profesional con marca de agua diagonal y opacidad personalizada, en español
+engine\planche-contact-engine.exe generate -i C:\Fotos\Islandia -n 16 --format A3 ^
+  --title "Islandia 2025" --author "Abel GEZ" ^
+  --watermark "Abel GEZ" --watermark-orientation "Diagonale horaire" --watermark-opacity 55 ^
+  --language es --pdf --html --csv
+</code></pre>
+
+<h2>5. Marca de agua</h2>
+<p>La marca de agua utiliza una <strong>representación única e idéntica</strong> sea cual sea la salida: hojas de contacto, PDF (que reutiliza directamente las imágenes de las hojas) y galería HTML (miniaturas de la cuadrícula e imágenes «a tamaño completo»). El texto se repite en mosaico sobre toda la imagen, con la orientación y la opacidad elegidas — sin ninguna diferencia de representación entre las tres salidas.</p>
+
+<h2>6. Archivos generados</h2>
+<table>
+<tr><th>Carpeta / Archivo</th><th>Contenido</th></tr>
+<tr><td><code>planches/</code></td><td>Hojas de contacto individuales (JPEG, 300 ppp)</td></tr>
+<tr><td><code>portfolio.pdf</code></td><td>PDF completo que reúne todas las hojas</td></tr>
+<tr><td><code>gallery/</code></td><td>Galería HTML paginada y autónoma (con sus propias miniaturas e imágenes «a tamaño completo»)</td></tr>
+<tr><td><code>gallery/originals/</code></td><td>Fotos en resolución completa: archivos copiados tal cual, salvo los RAW, convertidos a JPEG, cada uno con su archivo anexo <code>.js</code> para descargar con doble clic (solo con la opción «Originales a tamaño completo en la galería»)</td></tr>
+<tr><td><code>index.csv</code></td><td>Lista de las imágenes con su número</td></tr>
+<tr><td><code>generation.log</code></td><td>Registro detallado de la generación</td></tr>
+</table>
+
+<h2>7. Recomendaciones</h2>
+<ul>
+    <li>Para un aspecto homogéneo, mantenga el mismo número de imágenes por hoja en todo el proyecto.</li>
+    <li>La marca de agua en diagonal suele ser más elegante y visualmente menos molesta.</li>
+    <li>La galería HTML es autónoma: puede copiar toda la carpeta <code>gallery/</code> a otro lugar (memoria USB, servidor web...) sin romper nada.</li>
+    <li>Para que el botón de descarga del visor abra realmente el cuadro de diálogo de guardado habitual del navegador (en lugar de abrir la imagen), consulte la galería a través de un servidor web en lugar de hacer doble clic directamente en <code>index.html</code> (véase la nota siguiente).</li>
+    <li>Si la galería aparece oscura aunque se haya elegido el tema Claro o Neutro, es el navegador quien la oscurece a la fuerza: opción «Auto Dark Mode for Web Contents» de Chrome/Edge (<code>chrome://flags/#enable-force-dark</code>) o una extensión que oscurece las páginas. La galería declara su tema al navegador, lo que evita ese oscurecimiento cuando la preferencia del navegador es oscura, pero no cuando se fuerza en todas las circunstancias: desactive la opción o añada la galería a las excepciones de la extensión. Para comprobarlo, abra <code>index.html</code> en otro navegador o en una ventana privada.</li>
+    <li>En carpetas voluminosas (varios cientos de fotos), el procesamiento utiliza automáticamente todos los núcleos disponibles de la máquina: cuantos más núcleos tenga la máquina, más rápida será la generación.</li>
+</ul>
+<div class="note">
+Cuando la galería se abre directamente haciendo doble clic en <code>index.html</code> (sin servidor web), los navegadores bloquean por seguridad la lectura de los archivos vecinos y, con ello, la descarga programada habitual. <strong>Con la opción «Originales a tamaño completo en la galería»</strong>, cada original va acompañado de un pequeño archivo <code>.js</code> (<code>originals/IMG_1.jpg.js</code>) que el visor carga a petición: el botón ⇩ descarga entonces el JPEG con su nombre y el cuadro de diálogo habitual del navegador, incluso con doble clic y en cualquier navegador. Sin esa opción (copia reducida), o si falta un archivo anexo, el botón usa un simple enlace de descarga: según el navegador, activa el guardado o abre la imagen en una nueva pestaña (es lo que hacen Chrome y los navegadores basados en Chromium), y aparece un mensaje en el visor para explicarlo. Si la imagen se abrió en una nueva pestaña, un clic derecho sobre ella y luego <strong>«Guardar imagen como»</strong> sigue funcionando normalmente en ese caso. Para recuperar la descarga en un clic, basta con consultar la galería a través de un servidor web en lugar de localmente — un simple comando como <code>python3 -m http.server</code> ejecutado en la carpeta de la galería es suficiente, sin necesidad de instalar nada más.
+</div>
+
+<h2>8. Acerca de</h2>
+<p>Planche-Contact está desarrollado por <strong>Gilles MAGNEVILLE</strong>.</p>
+<p>Este software se ha diseñado con la ayuda de <a href="https://claude.ai">Claude.ai</a> (Anthropic).</p>
+<p>Distribuido bajo la licencia <strong>GNU GPL v3</strong>.</p>
+<p>Repositorio GitHub: <a href="https://github.com/gillesmagneville/planche-contact-windows">github.com/gillesmagneville/planche-contact-windows</a></p>
+
+</body>
+</html>

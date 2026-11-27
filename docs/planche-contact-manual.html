@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Planche-Contact - Manuel complet</title>
+    <style>
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.65;
+            background: #f8f9fa;
+        }
+        h1, h2, h3 { color: #1a1a1a; }
+        h1 { font-size: 2.2em; border-bottom: 3px solid #333; padding-bottom: 10px; }
+        h2 { font-size: 1.6em; margin-top: 45px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+        h3 { font-size: 1.25em; margin-top: 30px; }
+        code, pre {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "DejaVu Sans Mono", monospace;
+        }
+        pre {
+            padding: 14px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background: #e9ecef; }
+        .note {
+            background: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 14px 18px;
+            margin: 25px 0;
+        }
+        ul { padding-left: 22px; }
+        a { color: #0066cc; }
+    </style>
+</head>
+<body>
+
+<h1>Planche-Contact — Manuel complet</h1>
+
+<h2>1. Présentation</h2>
+<p><strong>Planche-Contact</strong> est un outil léger et rapide permettant de générer des planches contact photographiques de haute qualité (300 dpi), à partir d'un dossier de photos, sans base de données ni logiciel lourd.</p>
+<p>Il existe sous deux formes :</p>
+<ul>
+    <li><strong>Fenêtre Windows</strong> (<code>PlancheContact.exe</code>, depuis le menu Démarrer ou l'entrée « Ouvrir dans Planche-Contact » de l'Explorateur de fichiers)</li>
+    <li><strong>Ligne de commande</strong> (<code>engine\planche-contact-engine.exe generate</code>, dans le dossier d'installation)</li>
+</ul>
+<p>À partir d'un même dossier de photos, l'outil peut produire simultanément :</p>
+<ul>
+    <li>des <strong>planches contact</strong> au format JPEG (une ou plusieurs pages) ;</li>
+    <li>un <strong>PDF</strong> assemblant toutes les planches (légendes, titre et numéros de page peuvent être sélectionnés, copiés et recherchés dans n'importe quel lecteur PDF) ;</li>
+    <li>une <strong>galerie HTML</strong> paginée, autonome, avec vignettes cliquables ouvrant chaque photo dans une visionneuse plein écran : nom du fichier et numéro de page affichés, navigation entre les photos de la page (clavier ou flèches ‹ ›), saut direct à une autre page, zoom de 50 % à 200 %, téléchargement de la photo affichée (ou de l'original pleine taille, avec l'option « Originaux pleine taille dans la galerie »), informations techniques (résolution d'origine, taille, date de prise de vue) et bascule en plein écran ;</li>
+    <li>un <strong>index CSV</strong> listant chaque photo avec son numéro.</li>
+</ul>
+<div class="note">
+<strong>Sous Windows</strong>, au premier lancement de l'installeur, Windows affiche très probablement un écran bleu « Windows a protégé votre PC » (SmartScreen). C'est normal pour un petit logiciel non signé numériquement — pas un signe de logiciel malveillant. Cliquez sur <strong>Informations complémentaires</strong>, puis sur <strong>Exécuter quand même</strong> pour continuer.
+</div>
+
+<h2>2. Formats de photos pris en charge</h2>
+<table>
+<tr><th>Type</th><th>Extensions</th></tr>
+<tr><td>Formats standards</td><td><code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.tif</code>, <code>.tiff</code>, <code>.bmp</code>, <code>.webp</code>, <code>.heic</code>, <code>.heif</code></td></tr>
+<tr><td>Formats RAW</td><td><code>.cr2</code>, <code>.cr3</code> (Canon), <code>.nef</code> (Nikon), <code>.dng</code>, <code>.arw</code> (Sony)</td></tr>
+</table>
+<div class="note">
+Le support des fichiers RAW s'appuie sur la bibliothèque LibRaw, intégrée au moteur (aucune installation supplémentaire). Pour accélérer le traitement, Planche-Contact utilise en priorité l'aperçu JPEG déjà embarqué dans le fichier RAW par l'appareil photo ; un dématriçage complet (plus lent) n'est déclenché que si cet aperçu est absent ou trop petit pour l'usage demandé (vignette, planche, image "pleine taille" de la galerie). Les fichiers HEIC/HEIF sont listés mais ne peuvent pas encore être lus : ils sont signalés dans le journal et n'apparaissent pas sur les planches.
+</div>
+<p>L'orientation des photos (portrait ou paysage) est toujours respectée telle qu'indiquée par l'appareil photo, sur les trois sorties (planches, PDF, galerie HTML) — aucune manipulation manuelle n'est nécessaire, y compris pour des photos prises l'appareil tenu à la verticale.</p>
+
+<h2>3. Fenêtre de Planche-Contact</h2>
+
+<h3>3.1 Fenêtre principale</h3>
+<p>La fenêtre s'ouvre à la taille de son contenu, réduite au besoin pour tenir dans l'écran (elle reste redimensionnable normalement). Sur un petit écran, le formulaire de l'onglet Génération défile (ascenseur), tandis que le bas de la fenêtre — boutons « Lancer la génération », « Réglages avancés… », « Réinitialiser », « Afficher les résultats » et « Quitter », barre de progression et journal — reste toujours visible. Elle propose trois onglets : <strong>Génération</strong>, <strong>Aide</strong> et <strong>À propos</strong>. L'onglet Aide ouvre ce manuel dans le navigateur par défaut.</p>
+
+<h3>3.2 Onglet « Génération »</h3>
+
+<table>
+<tr><th>Champ / Option</th><th>Description</th></tr>
+<tr><td><strong>Titre du projet</strong></td><td>Texte affiché en grand en haut de chaque planche. Sur la même ligne que le nom de l'auteur.</td></tr>
+<tr><td><strong>Nom de l'auteur</strong></td><td>Nom affiché sous le titre (en gras, plus petit).</td></tr>
+<tr><td><strong>Dossier d'entrée</strong></td><td>Dossier contenant les photographies à traiter (obligatoire). Affiche automatiquement un aperçu des photos du dossier (voir §3.5).</td></tr>
+<tr><td><strong>Dossier de sortie</strong></td><td>Dossier où seront créés les résultats. Par défaut : <code>Portfolio/</code> dans le dossier source. Créé automatiquement s'il n'existe pas encore.</td></tr>
+<tr><td><strong>Recherche récursive</strong></td><td>Si coché, analyse aussi tous les sous-dossiers.</td></tr>
+<tr><td><strong>Choisir les sous-dossiers...</strong></td><td>Disponible quand « Recherche récursive » est cochée : ouvre une fenêtre qui liste chaque dossier contenant des photos (« Dossier principal » d'abord, puis les sous-dossiers, chacun avec son nombre de photos). Ne cochez que les dossiers à inclure (« Tout cocher » / « Tout décocher ») : seules les photos placées <em>directement</em> dans un dossier coché sont traitées, donc cocher <code>Paris</code> ne coche pas <code>Paris/Louvre</code>. Les planches, le PDF, la galerie HTML, l'index CSV et l'aperçu suivent tous la sélection, affichée à côté du bouton (« 3 dossier(s) sur 5 »). Le choix est réinitialisé quand le dossier d'entrée change ou que « Recherche récursive » est décochée.</td></tr>
+<tr><td><strong>Images par planche</strong></td><td>Nombre de vignettes par page (8 à 48, par pas de 4). Sur la même ligne que les trois champs suivants.</td></tr>
+<tr><td><strong>Format de la planche</strong></td><td>Format papier : A5, A4, A3, A2 ou Letter.</td></tr>
+<tr><td><strong>Filigrane (texte)</strong></td><td>Texte répété en mosaïque sur toutes les images (planches, PDF et galerie HTML) — un « © » est ajouté automatiquement s'il est absent.</td></tr>
+<tr><td><strong>Orientation du filigrane</strong></td><td>
+    <ul>
+        <li><strong>Horizontal</strong> : texte horizontal</li>
+        <li><strong>Diagonale horaire</strong> : texte incliné dans le sens des aiguilles d'une montre</li>
+        <li><strong>Diagonale anti-horaire</strong> : texte incliné dans le sens inverse</li>
+    </ul>
+</td></tr>
+<tr><td><strong>Opacité du filigrane</strong></td><td>Curseur de 0 à 100% (défaut : 40%). S'applique de façon identique aux planches, au PDF et à la galerie HTML.</td></tr>
+<tr><td><strong>Thème</strong></td><td>Clair (défaut), Sombre, Neutre ou Système : thème graphique appliqué de façon identique aux planches, au PDF et à la galerie HTML (détails et couleurs personnalisées : voir §3.3).</td></tr>
+<tr><td><strong>Options d'export</strong></td><td>Cases à cocher : Générer PDF, Générer Galerie HTML, Générer Index CSV.</td></tr>
+<tr><td><strong>Images par page</strong></td><td>Nombre de vignettes par page de la galerie HTML (12 à 64, par pas de 4, défaut : 48). Sur la même ligne que la case « Générer Galerie HTML ».</td></tr>
+<tr><td><strong>Originaux pleine taille dans la galerie</strong></td><td>Case à cocher, décochée par défaut, à droite du curseur « Images par page » (grisée si « Générer Galerie HTML » est décochée). Joint à la galerie les photos en pleine résolution : les fichiers JPEG, PNG, TIFF... sont copiés sans perte, les fichiers <strong>RAW sont convertis en JPEG pleine taille</strong> (même résolution, qualité 95, EXIF conservé quand l'aperçu intégré au RAW en contient) sous le même nom en <code>.jpg</code> : aucun fichier RAW ne figure jamais dans la galerie. Le bouton de téléchargement ⇩ de la visionneuse donne alors la photo de la prise de vue en pleine résolution, sous son nom, et non la copie réduite (2000 px) affichée à l'écran. La galerie devient nettement plus volumineuse (chaque original est aussi accompagné d'un fichier annexe d'environ 133 % de sa taille, qui sert au téléchargement en double-clic ; inutile sur un serveur web, il peut être supprimé avant la mise en ligne). <strong>Les originaux ne portent pas le filigrane</strong> (seules les copies affichées le portent) : un avertissement apparaît dans le journal si un filigrane est aussi demandé.</td></tr>
+</table>
+
+<p>Si aucun des trois champs Titre / Auteur / Filigrane n'est renseigné, l'en-tête des planches affiche par défaut le nom du dossier d'entrée (sans son chemin complet), pour éviter une planche totalement anonyme.</p>
+
+<h3>3.3 Mise en page, légendes et thème (réglages avancés)</h3>
+<p>Le bouton « Réglages avancés… » de la fenêtre principale ouvre une fenêtre à part, qui permet de personnaliser en détail la mise en page, les légendes et les couleurs du thème graphique des planches (le thème lui-même se choisit dans la fenêtre principale, voir §3.2) — tant qu'on n'y touche pas, les planches affichent le nom du fichier sous chaque photo (réglage par défaut, désactivable ici). Cette fenêtre se ferme avec le bouton « Fermer » ou la touche Échap ; les réglages sont conservés entre deux ouvertures. Si l'écran est petit, son contenu défile (ascenseur) et le bouton « Fermer » reste toujours visible.</p>
+
+<p><strong>Mise en page</strong></p>
+<table>
+<tr><th>Réglage</th><th>Description</th></tr>
+<tr><td><strong>Modèle</strong></td><td>Grille (comportement par défaut), Paysage, Portrait, Grandes vignettes (réduit automatiquement le nombre de photos par page pour garantir de grandes vignettes), Libre (colonnes/lignes choisies manuellement).</td></tr>
+<tr><td><strong>Orientation</strong></td><td>Portrait ou Paysage pour la page elle-même.</td></tr>
+<tr><td><strong>Ajustement</strong></td><td>Comment chaque photo s'adapte à sa cellule : Contenir (comportement par défaut, aucun recadrage : la photo entière, avec ses proportions) ou Remplir (la photo est recadrée au centre en carré pour remplir toute la cellule, sans marge vide). S'applique aux planches et au PDF ; la galerie HTML garde les proportions des photos. Une photo plus petite que sa cellule n'est jamais agrandie.</td></tr>
+<tr><td><strong>Titre / Auteur</strong></td><td>Position du titre et de l'auteur en haut de la planche : À gauche, Centré (comportement par défaut), À droite ou Masqué. Chacun a sa propre position et ils restent l'un sous l'autre, alignés sur les marges de la page ; « Masqué » supprime la ligne et la grille remonte d'autant. Un texte trop long est réduit pour tenir dans la largeur de la page. S'applique aussi à l'en-tête de la galerie HTML.</td></tr>
+<tr><td><strong>Numéroter les planches</strong></td><td>Affiche « Planche X/Y » en bas de chaque planche et du PDF (coché par défaut). Sans effet sur la galerie HTML, qui garde sa propre pagination. Les deux mentions qui suivent restent toujours affichées, sur les planches comme dans le PDF : « Planche générée par Planche-Contact », puis « Développé par Gilles MAGNEVILLE, sous licence GNU GPL v3 » (la même que dans la galerie HTML). Le pied de page occupe environ 11 mm : si la marge choisie est plus petite, la marge basse est portée à cette valeur pour que la grille ne passe jamais dessus.</td></tr>
+<tr><td><strong>Centrage</strong></td><td>La grille de photos est toujours centrée sur la page, horizontalement et verticalement sous l'en-tête ; sans légende, chaque photo est aussi centrée dans sa cellule. Toutes les planches d'une même génération — la dernière, incomplète, comprise — placent leurs photos aux mêmes endroits.</td></tr>
+<tr><td><strong>Marges / Espacement</strong></td><td>En millimètres, autour de la page et entre les vignettes. La marge basse ne descend jamais sous ~11 mm (place du pied de page de la planche).</td></tr>
+<tr><td><strong>Colonnes / Lignes</strong></td><td>Uniquement pour le modèle Libre (0 = automatique).</td></tr>
+</table>
+
+<p><strong>Légendes par photo</strong></p>
+<p>Une légende peut être affichée sous (ou au-dessus de) chaque vignette, construite à partir des métadonnées EXIF de la photo :</p>
+<ul>
+<li>Nom de fichier, date de prise de vue, appareil (marque/modèle), objectif, focale, focale équivalente 35&nbsp;mm, ouverture, vitesse d'obturation, sensibilité ISO, dimensions de l'image, position GPS.</li>
+<li>Position, zone réservée (mm), nombre de lignes, taille de police et alignement sont tous réglables.</li>
+<li>Un texte trop large pour la vignette passe automatiquement à la ligne, aux frontières des champs : aucune information n'est tronquée. Des lignes sont ajoutées au besoin, et les vignettes rapetissent légèrement pour leur laisser la place.</li>
+<li>Une métadonnée absente d'une photo donnée (par exemple pas de position GPS) est simplement omise de sa légende, sans jamais provoquer d'erreur.</li>
+</ul>
+<div class="note">
+La position GPS, si cochée, est affichée en clair sur la planche produite — à n'activer que si la diffusion de cette information est souhaitée (un avertissement est affiché au survol de la case correspondante).
+</div>
+
+<p><strong>Thème graphique</strong></p>
+<p>Quatre modes, choisis dans la liste « Thème » de la fenêtre principale (voir §3.2) et appliqués de façon identique aux planches JPEG, au PDF et à la galerie HTML : <strong>Clair</strong> (par défaut), <strong>Sombre</strong>, <strong>Neutre</strong>, et <strong>Système</strong> (pour la galerie HTML, suit le navigateur de chaque visiteur, avec un petit bouton discret lui permettant de basculer lui-même entre clair et sombre ; une planche JPEG ou un PDF étant une image fixe qui ne peut pas suivre le thème du système, ils restent clairs dans ce mode). Ce bloc avancé ne contient que les couleurs de fond, de texte, d'accent et de bordure, qui peuvent être personnalisées individuellement (format hexadécimal <code>#rrggbb</code>) pour remplacer celles du thème choisi. Dans la galerie HTML, le petit bouton ◐ (en pied de page) fait passer la page du thème choisi à son opposé clair/sombre ; un second clic revient exactement au thème choisi. Ce choix du visiteur est mémorisé dans son navigateur, mais seulement pour la galerie en cours : une galerie régénérée repart toujours du thème choisi dans la fenêtre principale.</p>
+
+<p><strong>Enregistrer / Charger un profil</strong></p>
+<p>L'ensemble de ces réglages (mise en page, légendes et thème) peut être enregistré dans un fichier JSON réutilisable (bouton « Enregistrer le profil... »), puis rechargé plus tard (bouton « Charger un profil... ») — pratique pour appliquer les mêmes réglages à plusieurs projets, ou pour les partager. Ce même fichier peut être transmis à la ligne de commande via <code>--profile</code> (voir §4.1).</p>
+
+<h3>3.4 Aperçu de la planche</h3>
+<p>Le bouton « Aperçu de la planche... », dans la fenêtre des réglages avancés, affiche, dans une fenêtre dédiée, la planche telle qu'elle sera réellement produite — mise en page, légendes, thème et filigrane compris — à partir des premières photos du dossier d'entrée (le même nombre que la génération réelle en placerait sur cette première page). Pratique pour vérifier l'effet d'un réglage avant de lancer une génération complète, en particulier sur un dossier contenant de nombreuses photos.</p>
+
+<h3>3.5 Aperçu du dossier d'entrée</h3>
+<p>Dès qu'un dossier d'entrée valide est renseigné (au démarrage si un dossier était déjà mémorisé, ou après saisie/sélection), une bande d'aperçu affiche automatiquement les vignettes des photos qu'il contient, par pages de 10, avec une pagination numérotée (<code>← Précédent 1 … 4 5 6 … 19 Suivant →</code>). Le scan et la génération des vignettes se font en arrière-plan : l'interface ne se fige pas, même sur un dossier contenant des centaines de photos.</p>
+
+<h3>3.6 Choix des dossiers</h3>
+<p>Le bouton « Choisir... » (dossier d'entrée ou de sortie) ouvre la boîte de dialogue standard de Windows pour choisir un dossier. Le chemin peut aussi être saisi ou collé directement dans le champ : l'aperçu se met à jour dès que le dossier existe.</p>
+
+<h3>3.7 Bouton « Afficher les résultats »</h3>
+<p>Après une génération réussie, ce bouton (à liste déroulante) permet d'ouvrir directement les résultats avec les applications par défaut du système, sans agrandir la fenêtre principale :</p>
+<table>
+<tr><th>Option</th><th>Action</th></tr>
+<tr><td><strong>Planches contact</strong></td><td>Ouvre le dossier <code>planches/</code> dans le gestionnaire de fichiers par défaut.</td></tr>
+<tr><td><strong>Portfolio PDF</strong></td><td>Ouvre le PDF avec le lecteur par défaut.</td></tr>
+<tr><td><strong>Galerie HTML</strong></td><td>Ouvre la galerie dans le navigateur par défaut.</td></tr>
+<tr><td><strong>Index CSV</strong></td><td>Ouvre le fichier CSV avec l'application par défaut (tableur, généralement).</td></tr>
+</table>
+<p>Chaque option n'est activée que si l'élément correspondant a bien été généré (selon les cases cochées lors de la génération). Si aucune application par défaut n'est configurée sur le système pour un type de fichier donné, une fenêtre d'avertissement s'affiche, avec une suggestion d'application à installer.</p>
+
+<h3>3.8 Onglets « Aide » et « À propos », préférences</h3>
+<p>L'onglet « Aide » ouvre ce manuel dans le navigateur par défaut. L'onglet « À propos » affiche le numéro de version, la date de build, une courte description, l'auteur, la licence (<strong>GNU GPL v3</strong>) et un lien cliquable vers le dépôt GitHub du projet. Le bouton en forme de roue dentée, à droite des onglets, ouvre les <strong>Préférences</strong> : le choix de la langue.</p>
+<div class="note">
+Un changement de langue ne prend effet qu'au redémarrage de l'application pour les textes de la fenêtre ; il s'applique tout de suite aux messages de la génération et à toute galerie HTML générée par la suite — voir §4 et §5.
+</div>
+
+<h3>3.9 Ouverture depuis l'Explorateur de fichiers (menu contextuel)</h3>
+<p>L'installeur ajoute une entrée <strong>« Ouvrir dans Planche-Contact »</strong> au menu du clic droit de l'Explorateur de fichiers. Elle apparaît sur un <strong>dossier</strong>, sur le <strong>fond d'un dossier ouvert</strong> et sur une <strong>sélection de photos</strong> (formats pris en charge uniquement ; photos et dossiers peuvent être mélangés). Sous Windows 11, elle se trouve dans « Afficher plus d'options » ; sous Windows 10, dans le menu habituel du clic droit. Elle est installée pour l'utilisateur courant, sans droits d'administrateur.</p>
+<p>La fenêtre s'ouvre avec ce qui a été sélectionné :</p>
+<ul>
+    <li>un <strong>dossier seul</strong> devient le dossier d'entrée, et toutes ses photos sont traitées (la recherche récursive reste à votre choix) ;</li>
+    <li>une <strong>sélection de photos</strong> (ou de plusieurs dossiers, ou un mélange) est traitée telle quelle : le dossier d'entrée est le dossier commun aux éléments sélectionnés, et seules les photos sélectionnées sont traitées, plus les photos placées directement dans chaque dossier sélectionné (pas celles de leurs sous-dossiers). Une ligne sous le dossier d'entrée indique le nombre de photos reçues, avec un bouton « Utiliser tout le dossier » pour revenir au dossier entier ;</li>
+    <li>le dossier de sortie est le dossier sélectionné ou, pour une sélection de photos, le dossier qui les contient (modifiable comme d'habitude). Les résultats y sont créés : planches dans <code>planches/</code>, galerie dans <code>gallery/</code>, et le PDF, le CSV et le journal à côté. Une nouvelle génération les remplace sans les compter comme des photos.</li>
+</ul>
+<p>Chaque ouverture lance sa propre fenêtre.</p>
+<div class="note">
+La sélection est transmise au programme par un fichier texte temporaire (<code>--paths-from</code>, voir §4.1), si bien qu'une très grosse sélection ne pose aucun problème. Le désinstalleur retire l'entrée du menu.
+</div>
+
+<h2>4. Interface en ligne de commande (CLI)</h2>
+
+<h3>4.1 Options principales</h3>
+
+<table>
+<tr><th>Option</th><th>Description</th><th>Exemple</th></tr>
+<tr><td><code>-i, --input</code></td><td>Dossier source (obligatoire)</td><td><code>-i C:\Photos\Voyage</code></td></tr>
+<tr><td><code>-o, --output</code></td><td>Dossier de sortie</td><td><code>-o ./Resultats</code></td></tr>
+<tr><td><code>-n, --num</code></td><td>Nombre d'images par planche</td><td><code>-n 16</code></td></tr>
+<tr><td><code>--format</code></td><td>Format de page (A5, A4, A3, A2, Letter)</td><td><code>--format A3</code></td></tr>
+<tr><td><code>--title</code></td><td>Titre du projet</td><td><code>--title "Voyage 2025"</code></td></tr>
+<tr><td><code>--author</code></td><td>Nom de l'auteur</td><td><code>--author "Abel GEZ"</code></td></tr>
+<tr><td><code>--watermark</code></td><td>Texte du filigrane</td><td><code>--watermark "Abel GEZ"</code></td></tr>
+<tr><td><code>--watermark-orientation</code></td><td>Orientation du filigrane</td><td><code>--watermark-orientation "Diagonale horaire"</code></td></tr>
+<tr><td><code>--watermark-opacity</code></td><td>Opacité du filigrane, de 0 à 100 (défaut : 40)</td><td><code>--watermark-opacity 60</code></td></tr>
+<tr><td><code>--pdf</code></td><td>Générer un PDF</td><td></td></tr>
+<tr><td><code>--html</code></td><td>Générer une galerie HTML</td><td></td></tr>
+<tr><td><code>--csv</code></td><td>Générer un index CSV</td><td></td></tr>
+<tr><td><code>-r, --recursive</code></td><td>Analyse récursive des sous-dossiers</td><td></td></tr>
+<tr><td><code>--include-dir</code></td><td>Ne traiter que les photos placées directement dans ce sous-dossier (chemin relatif au dossier d'entrée, <code>.</code> pour le dossier d'entrée lui-même). Répétable ; implique le parcours récursif. Sans cette option, toutes les photos sont traitées.</td><td><code>--include-dir Paris --include-dir "Été 2026"</code></td></tr>
+<tr><td><code>--include-dirs-file</code></td><td>Fichier texte (UTF-8) listant les sous-dossiers à traiter, un par ligne (équivalent de plusieurs <code>--include-dir</code>)</td><td><code>--include-dirs-file dossiers.txt</code></td></tr>
+<tr><td><code>--files-from</code></td><td>Fichier texte (UTF-8) listant les photos à traiter, une par ligne (chemin absolu ou relatif au dossier d'entrée) ; seules ces photos sont traitées. C'est ce qu'utilise le menu contextuel du gestionnaire de fichiers.</td><td><code>--files-from photos.txt</code></td></tr>
+<tr><td><code>--sort</code></td><td>Tri des photos : <code>date</code> (EXIF) ou <code>name</code></td><td><code>--sort name</code></td></tr>
+<tr><td><code>--html-per-page</code></td><td>Nombre d'images par page dans la galerie HTML (défaut : 48)</td><td><code>--html-per-page 60</code></td></tr>
+<tr><td><code>--html-originals</code></td><td>Joindre à la galerie HTML les originaux pleine taille (le bouton de téléchargement les donne ; les fichiers RAW sont convertis en JPEG, aucun RAW n'est placé dans la galerie ; la galerie devient nettement plus volumineuse, et les originaux ne portent pas le filigrane)</td><td><code>--html --html-originals</code></td></tr>
+<tr><td><code>--language</code></td><td>Langue des messages et de la galerie HTML générée : <code>system</code> (défaut), <code>en</code>, <code>fr</code>, <code>de</code>, <code>es</code></td><td><code>--language fr</code></td></tr>
+<tr><td><code>--profile</code></td><td>Fichier de profil JSON (mise en page, légendes, thème — voir §3.3), produit par le bouton « Enregistrer le profil... » de l'interface graphique, ou écrit/modifié à la main. Un fichier absent ou invalide retombe silencieusement sur les réglages par défaut.</td><td><code>--profile mon-profil.json</code></td></tr>
+</table>
+<p>La fenêtre elle-même accepte <code>--paths-from FICHIER</code> (un chemin de dossier ou de photo par ligne, UTF-8 ; un fichier nommé <code>planche-contact-selection-*.txt</code> est supprimé une fois lu) ou des chemins donnés directement : <code>PlancheContact.exe C:\Photos\Voyage</code>. C'est ce qu'appelle le menu contextuel.</p>
+<div class="note">
+Les valeurs de <code>--watermark-orientation</code> restent en français en interne quelle que soit la <code>--language</code> choisie (<code>"Horizontal"</code>, <code>"Diagonale horaire"</code>, <code>"Diagonale anti-horaire"</code>) — c'est le contrat interne du moteur, indépendant de la langue d'affichage.
+</div>
+
+<h3>4.2 Exemples complets</h3>
+
+<pre><code>rem Depuis le dossier d'installation : %LOCALAPPDATA%\Programs\Planche-Contact
+cd /d "%LOCALAPPDATA%\Programs\Planche-Contact"
+
+rem Génération simple
+engine\planche-contact-engine.exe generate -i C:\Photos\2025 -o C:\Sortie --pdf --html
+
+rem Galerie HTML avec 24 images par page au lieu de 48 par défaut
+engine\planche-contact-engine.exe generate -i C:\Photos\2025 -o C:\Sortie --html --html-per-page 24
+
+rem Version professionnelle avec filigrane diagonal et opacité personnalisée, en français
+engine\planche-contact-engine.exe generate -i C:\Photos\Islande -n 16 --format A3 ^
+  --title "Islande 2025" --author "Abel GEZ" ^
+  --watermark "Abel GEZ" --watermark-orientation "Diagonale horaire" --watermark-opacity 55 ^
+  --language fr --pdf --html --csv
+</code></pre>
+
+<h2>5. Filigrane</h2>
+<p>Le filigrane utilise un <strong>rendu unique et identique</strong> quel que soit le support de sortie : planches contact, PDF (qui réutilise directement les images de planches) et galerie HTML (vignettes de la grille et images « pleine taille »). Le texte est répété en mosaïque sur toute l'image, avec l'orientation et l'opacité choisies — aucune différence de rendu entre les trois sorties.</p>
+
+<h2>6. Fichiers générés</h2>
+<table>
+<tr><th>Dossier / Fichier</th><th>Contenu</th></tr>
+<tr><td><code>planches/</code></td><td>Planches contact individuelles (JPEG, 300 dpi)</td></tr>
+<tr><td><code>portfolio.pdf</code></td><td>PDF complet assemblant toutes les planches</td></tr>
+<tr><td><code>gallery/</code></td><td>Galerie HTML paginée et autonome (avec ses propres vignettes et images « pleine taille »)</td></tr>
+<tr><td><code>gallery/originals/</code></td><td>Photos en pleine résolution : fichiers copiés tels quels, sauf les RAW, convertis en JPEG, chacun avec son fichier annexe <code>.js</code> pour le téléchargement en double-clic (uniquement avec l'option « Originaux pleine taille dans la galerie »)</td></tr>
+<tr><td><code>index.csv</code></td><td>Liste des images avec leur numéro</td></tr>
+<tr><td><code>generation.log</code></td><td>Journal détaillé de la génération</td></tr>
+</table>
+
+<h2>7. Recommandations</h2>
+<ul>
+    <li>Pour un rendu homogène, conservez le même nombre d'images par planche sur tout le projet.</li>
+    <li>Le filigrane en diagonale est généralement plus élégant et moins gênant visuellement.</li>
+    <li>La galerie HTML est autonome : vous pouvez copier tout le dossier <code>gallery/</code> ailleurs (clé USB, serveur web...) sans rien casser.</li>
+    <li>Pour que le bouton de téléchargement de la visionneuse ouvre bien la boîte de dialogue d'enregistrement du navigateur (plutôt que d'ouvrir l'image), consultez la galerie via un serveur web plutôt qu'en double-cliquant directement sur <code>index.html</code> (voir la note ci-dessous).</li>
+    <li>Si la galerie s'affiche sombre alors que le thème Clair ou Neutre est choisi, c'est le navigateur qui l'assombrit de force : option « Auto Dark Mode for Web Contents » de Chrome/Edge (<code>chrome://flags/#enable-force-dark</code>) ou extension qui assombrit les pages. La galerie déclare son thème au navigateur, ce qui écarte ce noircissement quand le navigateur est en préférence sombre, mais pas quand il est forcé en toutes circonstances : désactivez l'option, ou ajoutez la galerie aux exceptions de l'extension. Pour vérifier, ouvrez <code>index.html</code> dans un autre navigateur ou en navigation privée.</li>
+    <li>Sur les dossiers volumineux (plusieurs centaines de photos), le traitement exploite automatiquement tous les cœurs disponibles de la machine : plus la machine dispose de cœurs, plus la génération est rapide.</li>
+</ul>
+<div class="note">
+Quand la galerie est ouverte directement en double-cliquant sur <code>index.html</code> (sans serveur web), les navigateurs bloquent par sécurité la lecture des fichiers voisins, donc le téléchargement « programmé » habituel. <strong>Avec l'option « Originaux pleine taille dans la galerie »</strong>, chaque original est accompagné d'un petit fichier <code>.js</code> (<code>originals/IMG_1.jpg.js</code>) que la visionneuse charge à la demande : le bouton ⇩ télécharge alors le JPEG sous son nom, avec la boîte de dialogue habituelle du navigateur, même en double-clic et quel que soit le navigateur. Sans cette option (copie réduite), ou si un fichier annexe est absent, le bouton utilise un simple lien de téléchargement : selon le navigateur, il déclenche l'enregistrement ou ouvre l'image dans un nouvel onglet (c'est le cas de Chrome et des navigateurs basés sur Chromium), et un message s'affiche dans la visionneuse pour l'expliquer. Si l'image s'est ouverte dans un nouvel onglet, un clic droit sur celle-ci puis <strong>« Enregistrer l'image sous »</strong> fonctionne toujours normalement dans ce cas. Pour retrouver le téléchargement en un clic, il suffit de consulter la galerie via un serveur web plutôt qu'en local — une simple commande comme <code>python3 -m http.server</code> lancée dans le dossier de la galerie suffit, sans rien installer de plus.
+</div>
+
+<h2>8. À propos</h2>
+<p>Planche-Contact est développé par <strong>Gilles MAGNEVILLE</strong>.</p>
+<p>Ce logiciel a été conçu avec l'aide de <a href="https://claude.ai">Claude.ai</a> (Anthropic).</p>
+<p>Distribué sous licence <strong>GNU GPL v3</strong>.</p>
+<p>Dépôt GitHub : <a href="https://github.com/gillesmagneville/planche-contact-windows">github.com/gillesmagneville/planche-contact-windows</a></p>
+
+</body>
+</html>

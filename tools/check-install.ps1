@@ -47,7 +47,9 @@ $run = Start-Process -FilePath (Resolve-Path $Installer).Path -ArgumentList '/S'
 if ($run.ExitCode -ne 0) { Fail "the installer ended with exit code $($run.ExitCode)" }
 
 foreach ($file in 'PlancheContact.exe', 'PlancheContact.pri', 'engine\planche-contact-engine.exe',
-                  'planche-contact-verb.exe', 'Uninstall.exe') {
+                  'planche-contact-verb.exe', 'Uninstall.exe', 'docs\planche-contact-manual.html',
+                  'docs\planche-contact-manual.en.html', 'docs\planche-contact-manual.de.html',
+                  'docs\planche-contact-manual.es.html') {
     if (-not (Test-Path (Join-Path $dir $file))) { Fail "not installed: $file" }
 }
 Write-Host "ok: the programs are in $dir"
