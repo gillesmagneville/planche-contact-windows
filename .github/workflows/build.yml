@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Builds and tests planche-contact-windows.
+#
+#   rust   (Linux)  tests the engine, then cross-compiles it for Windows
+#
+# The window (app/), the context menu verb and the installer get their jobs
+# when they arrive, as in explorer-convert-images.
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  WINDOWS_TARGET: x86_64-pc-windows-gnu
+
+jobs:
+  rust:
+    name: Engine (Rust)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the MinGW-w64 compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix
+
+      # The version pinned in rust-toolchain.toml, with the Windows target.
+      - name: Install the Rust toolchain
+        run: |
+          channel="$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal --target "$WINDOWS_TARGET"
+          rustup show active-toolchain
+          cargo --version
+
+      - name: Test
+        run: cargo test --locked
+
+      - name: Build for Windows
+        run: cargo build --release --locked --target "$WINDOWS_TARGET"
+
+      # It must run on a Windows that has no MinGW installed.
+      - name: Check that the engine needs no MinGW DLL
+        run: |
+          if x86_64-w64-mingw32-objdump -p "target/$WINDOWS_TARGET/release/planche-contact-engine.exe" \
+              | grep -i 'DLL Name' | grep -i -E 'libstdc\+\+|libgcc|libwinpthread'; then
+            echo "::error::planche-contact-engine.exe depends on a MinGW DLL (see above)"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: engine-windows
+          path: target/${{ env.WINDOWS_TARGET }}/release/planche-contact-engine.exe
+          if-no-files-found: error

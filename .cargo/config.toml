@@ -1,0 +1,24 @@
+# The Windows executables are built with the GNU toolchain (MinGW-w64), from
+# Linux: the bundled LibRaw build script does not support MSVC, and this way
+# the very same commands run on a developer's machine and in the CI.
+#
+#   sudo apt-get install gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix
+#   rustup target add x86_64-pc-windows-gnu
+#   cargo build --release --target x86_64-pc-windows-gnu
+#
+# The "posix" variant of MinGW-w64 is named explicitly: Ubuntu also ships a
+# "win32" variant, and which one the short names point to depends on what is
+# installed. To use other tools (MSYS2 on Windows, for instance), set the
+# CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER, CC_x86_64_pc_windows_gnu and
+# CXX_x86_64_pc_windows_gnu environment variables: they take precedence.
+#
+# crt-static links the C and C++ runtimes into each .exe, so that no MinGW
+# DLL has to be shipped next to it.
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc-posix"
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[env]
+CC_x86_64_pc_windows_gnu = "x86_64-w64-mingw32-gcc-posix"
+CXX_x86_64_pc_windows_gnu = "x86_64-w64-mingw32-g++-posix"
+AR_x86_64_pc_windows_gnu = "x86_64-w64-mingw32-ar"

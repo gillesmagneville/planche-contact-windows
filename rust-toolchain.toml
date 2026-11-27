@@ -1,0 +1,8 @@
+# Rust version used to build the project, for those who use rustup (the CI
+# does): pinned so that a build does not change by itself. Bump it
+# deliberately. A Rust installed another way (apt…) ignores this file; the
+# native tests then run with whatever version is installed (1.82 or later).
+[toolchain]
+channel = "1.97.0"
+profile = "minimal"
+targets = ["x86_64-pc-windows-gnu"]

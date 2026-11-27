@@ -1,0 +1,26 @@
+[package]
+name = "planche-contact-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Contact sheet engine (sheets, PDF, HTML gallery, CSV) of planche-contact-windows"
+
+[[bin]]
+name = "planche-contact-engine"
+path = "src/main.rs"
+
+[dependencies]
+ab_glyph = "0.2"
+base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "tiff", "bmp", "gif", "webp"] }
+jpeg-decoder = { version = "0.3", default-features = false }
+kamadak-exif = "0.6"
+rayon = "1.10"
+# Bundled LibRaw (RAW decoding and embedded previews), see vendor/README.md
+rsraw-sys = { path = "vendor/libraw-sys" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[dev-dependencies]
