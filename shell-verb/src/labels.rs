@@ -38,4 +38,15 @@ mod tests {
         assert_eq!(menu_label(0x0409), "Open in Planche-Contact"); // en-US
         assert_eq!(menu_label(0x0411), "Open in Planche-Contact"); // ja-JP -> English
     }
+
+    /// The last page of the installer quotes the menu entry, in the same
+    /// languages: it must name it as it really appears.
+    #[test]
+    fn labels_are_those_quoted_by_the_installer() {
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../installer/installer.nsi");
+        let installer = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{path}: {e}"));
+        for (_, lang, label) in LABELS {
+            assert!(installer.contains(label), "installer.nsi does not quote the {lang} label");
+        }
+    }
 }

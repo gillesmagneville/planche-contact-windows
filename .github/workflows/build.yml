@@ -7,8 +7,8 @@
 #   app    (Windows)  tests the window's core library with that engine and
 #                     the menu handler's COM code, builds the window, then
 #                     checks the whole chain: menu handler -> window -> engine
-#
-# The installer gets its job when it arrives, as in explorer-convert-images.
+#   installer (Linux) builds the NSIS installer from that folder; on a
+#                     version tag, prepares a draft release with it
 
 name: Build
 
@@ -154,3 +154,50 @@ jobs:
           name: planche-contact-folder
           path: dist/planche-contact
           if-no-files-found: error
+
+  installer:
+    name: Installer
+    needs: app
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # to create the draft release, on a version tag only
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install NSIS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends nsis binutils-mingw-w64-x86-64
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: planche-contact-folder
+          path: dist/planche-contact
+
+      - name: Build the installer
+        run: bash ./build-installer.sh --dist dist/planche-contact
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: installer
+          path: |
+            dist/planche-contact-*-setup.exe
+            dist/planche-contact-*-setup.exe.sha256
+          if-no-files-found: error
+
+      # A draft: nothing is public until you review and publish it yourself.
+      - name: Prepare a draft release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(tr -d '[:space:]' < VERSION)"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::the tag $GITHUB_REF_NAME does not match the VERSION file ($version)"
+            exit 1
+          fi
+          bash ./tools/release-notes.sh "$version" > release-notes.md
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md \
+            dist/planche-contact-*-setup.exe \
+            dist/planche-contact-*-setup.exe.sha256

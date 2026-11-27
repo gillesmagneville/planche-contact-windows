@@ -214,10 +214,14 @@ mod tests {
         std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"))
     }
 
-    /// The programs find each other by file name: the names written here
-    /// and in the application project must agree.
+    /// The programs find each other by file name: the names written here,
+    /// in the installer and in the application project must agree.
     #[test]
-    fn program_names_match_the_application_project() {
+    fn program_names_match_the_installer_and_the_application_project() {
+        let installer = repository_file("installer/installer.nsi");
+        assert!(installer.contains(&format!("!define APP_EXE \"{APP_EXE}\"")), "APP_EXE");
+        assert!(installer.contains(&format!("!define VERB_EXE \"{VERB_EXE}\"")), "VERB_EXE");
+
         let project = repository_file("app/PlancheContact/PlancheContact.csproj");
         let assembly = APP_EXE.trim_end_matches(".exe");
         assert!(

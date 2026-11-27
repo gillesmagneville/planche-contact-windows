@@ -15,7 +15,7 @@ construite comme
 | `engine/` | Le moteur : planches contact (JPEG), PDF à texte sélectionnable, galerie HTML, index CSV, fichiers RAW | Rust |
 | `app/` | La fenêtre (WinUI 3) et sa bibliothèque testée | C# |
 | `shell-verb/` | « Ouvrir dans Planche-Contact » dans le menu clic droit de l'Explorateur | Rust |
-| `installer/` | Installateur par utilisateur, sans droits d'administrateur | NSIS — *à venir* |
+| `installer/` | Installateur par utilisateur, sans droits d'administrateur | NSIS |
 
 Le moteur est une réécriture, règle par règle, du moteur Python de la
 version Linux : mêmes mises en page, légendes, thèmes, filigrane, galerie et
