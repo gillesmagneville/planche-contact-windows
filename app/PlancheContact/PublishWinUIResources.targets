@@ -1,0 +1,60 @@
+<Project>
+
+  <!-- Puts the resource files of the window in the published folder.
+
+       Why: for a WinUI application without MSIX packaging (ours),
+       "dotnet publish" leaves out the application's resource index, the file
+       PlancheContact.pri, although the build produces it. The Windows
+       App SDK only wires that file into publish for MSIX packages (see
+       https://github.com/microsoft/WindowsAppSDK/issues/6720). Nothing is
+       reported at build time; at start-up the window cannot load the look
+       declared in App.xaml and the program stops by itself after some ten
+       seconds, without a message.
+
+       What this does: every resource index (.pri) and compiled XAML file
+       (.xbf) found in the build output folder is added to the files to
+       publish, unless publish already has a file for that place. So the
+       published folder holds the same resource files as the build output
+       folder, which is the layout Visual Studio runs the application from.
+       Each file added is named in the build output ("added to the published
+       files"). Should a later Windows App SDK publish these files itself,
+       this target finds nothing to add and prints nothing: it can then be
+       removed.
+
+       Then the publish fails, with an explanation, if the application's own
+       index is still missing: better a failed build than an installer whose
+       window does not start.
+
+       When: once the list of files to publish is complete (whatever the
+       Windows App SDK adds to it is then known, so nothing is added twice)
+       and before the files are copied. -->
+  <Target Name="PublishWinUIResourceFiles" AfterTargets="ComputeFilesToPublish">
+
+    <ItemGroup>
+      <!-- The default publish folder lies inside the build output folder:
+           files of an earlier publish must not be taken for build output. -->
+      <_BuiltWinUIResourceFile Include="$(OutDir)**\*.pri;$(OutDir)**\*.xbf" Exclude="$(PublishDir)**" />
+
+      <!-- Both lists as paths relative to their folder, with "/" throughout,
+           so that they can be compared. -->
+      <_BuiltWinUIResource Include="@(_BuiltWinUIResourceFile->'%(RecursiveDir)%(Filename)%(Extension)'->Replace('\', '/'))" />
+      <_AlreadyPublishedPath Include="@(ResolvedFileToPublish->'%(RelativePath)'->Replace('\', '/'))" />
+      <_MissingWinUIResource Include="@(_BuiltWinUIResource)" Exclude="@(_AlreadyPublishedPath)" />
+
+      <ResolvedFileToPublish Include="@(_MissingWinUIResource->'$(OutDir)%(Identity)')">
+        <RelativePath>%(_MissingWinUIResource.Identity)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+
+      <_PublishedApplicationPri Include="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.RelativePath)' == '$(TargetName).pri'" />
+    </ItemGroup>
+
+    <Message Importance="high" Condition="'@(_MissingWinUIResource)' != ''"
+             Text="$(MSBuildProjectName): added to the published files (left out by publish): @(_MissingWinUIResource, ', ')" />
+
+    <Error Condition="'@(_PublishedApplicationPri)' == ''"
+           Text="$(TargetName).pri, the resource index of the window, is not among the files to publish and was not found in $(OutDir). The window would not start without it. See PublishWinUIResources.targets." />
+
+  </Target>
+
+</Project>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="PlancheContact.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- This file only brings in the standard look of the WinUI controls
+         (Windows 11 style, light and dark themes). The windows themselves are
+         built in code: see MainWindow.cs. -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

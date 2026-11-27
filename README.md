@@ -13,7 +13,7 @@ built the same way as
 | Folder | What | Language |
 |---|---|---|
 | `engine/` | The engine: contact sheets (JPEG), PDF with selectable text, HTML gallery, CSV index, RAW files | Rust |
-| `app/` | The window (WinUI 3) | C# — *to come* |
+| `app/` | The window (WinUI 3) and its tested core library | C# |
 | `shell-verb/` | "Open in Planche-Contact" in the Explorer's right-click menu | Rust — *to come* |
 | `installer/` | Per-user installer, no administrator rights | NSIS — *to come* |
 
@@ -37,6 +37,26 @@ The engine is a command-line program: `planche-contact-engine generate -i
 FOLDER --pdf --html --csv` takes the options of the Linux version's
 `portfolio.py`. See the comment at the top of `engine/src/main.rs` for the
 other commands, used by the window.
+
+## Build the window
+
+The `app/PlancheContact.Core` library (arguments, settings, talking to the
+engine, translations) also builds and is tested on Linux, with the .NET 10
+SDK and the engine built by `cargo build --release`:
+
+```bash
+dotnet run -c Release --project app/PlancheContact.Core.Tests
+```
+
+The window itself builds on Windows:
+
+```powershell
+dotnet publish app/PlancheContact -c Release -r win-x64 -p:Platform=x64 -o dist/planche-contact
+```
+
+then `planche-contact-engine.exe` goes in `dist/planche-contact/engine/`.
+The texts only the Windows window uses are in `locales/windows/`; all the
+others are those of `locales/`, shared with the Linux version.
 
 ## License
 

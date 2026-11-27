@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The window of Planche-Contact on Windows: a WinUI 3 application
+       (Windows App SDK). The engine is engine/ of this repository
+       (engine\planche-contact-engine.exe next to the window); this window
+       only starts it.
+
+       "Unpackaged" and "self-contained": the build output is a plain folder
+       holding the program, the .NET runtime and the Windows App SDK runtime.
+       Nothing has to be installed on the user's machine beforehand.
+
+       Builds on Windows only (the WinUI build tools do not run elsewhere):
+
+         dotnet publish app/PlancheContact -c Release -r win-x64 -p:Platform=x64 -o FOLDER -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- No hyphen or dot in these names: the WinUI build derives identifiers
+         and resource file names from them. -->
+    <RootNamespace>PlancheContact</RootNamespace>
+    <AssemblyName>PlancheContact</AssemblyName>
+
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+
+    <!-- Faster startup (code compiled ahead of time); no trimming. -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Version pinned on purpose: a build must not change by itself. Same
+         version as explorer-convert-images. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PlancheContact.Core\PlancheContact.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Also copied next to the program: the window icon is loaded from it. -->
+    <Content Include="Assets\AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Without it the published window does not start: read the file. -->
+  <Import Project="PublishWinUIResources.targets" />
+
+</Project>

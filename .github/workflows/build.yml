@@ -2,10 +2,12 @@
 #
 # Builds and tests planche-contact-windows.
 #
-#   rust   (Linux)  tests the engine, then cross-compiles it for Windows
+#   rust   (Linux)    tests the engine, then cross-compiles it for Windows
+#   app    (Windows)  tests the window's core library with that engine,
+#                     builds the window and checks that it starts
 #
-# The window (app/), the context menu verb and the installer get their jobs
-# when they arrive, as in explorer-convert-images.
+# The context menu verb and the installer get their jobs when they arrive,
+# as in explorer-convert-images.
 
 name: Build
 
@@ -67,4 +69,78 @@ jobs:
         with:
           name: engine-windows
           path: target/${{ env.WINDOWS_TARGET }}/release/planche-contact-engine.exe
+          if-no-files-found: error
+
+  app:
+    name: Window (C#, WinUI 3)
+    needs: rust
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: engine-windows
+          path: engine-windows
+
+      # The same tests as on Linux, with the engine built for Windows.
+      - name: Test the core library with the real engine
+        shell: pwsh
+        env:
+          PLANCHE_CONTACT_REQUIRE_ENGINE: "1"
+        run: |
+          $env:PLANCHE_CONTACT_ENGINE = (Resolve-Path engine-windows\planche-contact-engine.exe).Path
+          dotnet run -c Release --project app/PlancheContact.Core.Tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build the window
+        shell: pwsh
+        run: |
+          dotnet publish app/PlancheContact -c Release -r win-x64 -p:Platform=x64 -o dist/planche-contact
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Add the engine
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\planche-contact\engine | Out-Null
+          Copy-Item engine-windows\planche-contact-engine.exe dist\planche-contact\engine\
+
+      # The window must start and stay up (a missing resource file, for
+      # example, makes it stop at once), with its engine found next to it.
+      - name: Check that the window starts
+        shell: pwsh
+        run: |
+          foreach ($file in 'PlancheContact.exe', 'PlancheContact.pri', 'engine\planche-contact-engine.exe') {
+            if (-not (Test-Path "dist\planche-contact\$file")) { throw "missing in the built folder: $file" }
+          }
+          & dist\planche-contact\engine\planche-contact-engine.exe --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $window = Start-Process -FilePath dist\planche-contact\PlancheContact.exe -PassThru
+          Start-Sleep -Seconds 15
+          if ($window.HasExited) { throw "the window stopped by itself (exit code $($window.ExitCode))" }
+          Stop-Process -Id $window.Id
+          $log = Join-Path $env:TEMP 'planche-contact-app.log'
+          if (Test-Path $log) { Get-Content $log; throw "the window recorded an error" }
+
+      # Only when a step above failed: the errors Windows itself recorded in
+      # the last half hour. For a program that stopped by itself, they name
+      # the faulty module and the error code.
+      - name: Show the errors recorded by Windows
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Level = 1, 2; StartTime = (Get-Date).AddMinutes(-30) } -ErrorAction SilentlyContinue |
+            Select-Object -First 12 |
+            Format-List TimeCreated, ProviderName, Id, Message
+          exit 0
+
+      # Everything the installer will install, as a plain folder.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: planche-contact-folder
+          path: dist/planche-contact
           if-no-files-found: error
