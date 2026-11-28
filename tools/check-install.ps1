@@ -71,7 +71,12 @@ Write-Host "ok: Settings > Apps shows Planche-Contact $version ($([int]($entry.E
 $firstLevel = ([Environment]::OSVersion.Version.Build -ge 22000) -and (Test-Path (Join-Path $dir 'planche-contact-menu.msix'))
 if ($firstLevel) {
     $package = Get-AppxPackage -Name $packageName
-    if ($null -eq $package) { Fail "the Windows 11 menu package $packageName is not registered" }
+    if ($null -eq $package) {
+        # What menu-package.ps1 reported, and what the deployment service says.
+        Get-Content (Join-Path $env:TEMP 'planche-contact-verb.log') -ErrorAction SilentlyContinue
+        Get-AppxLog -ErrorAction SilentlyContinue | Select-Object -Last 15 | Format-List TimeCreated, Message
+        Fail "the Windows 11 menu package $packageName is not registered"
+    }
     if ($package.Version -ne "$version.0") { Fail "the menu package has version $($package.Version), not $version.0" }
     if (-not (Get-ChildItem Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Subject -eq $publisher })) {
         Fail 'the certificate of the menu package is not trusted'
