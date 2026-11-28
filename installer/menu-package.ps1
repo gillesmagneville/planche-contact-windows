@@ -6,14 +6,19 @@
 # user, without administrator rights.
 #
 #   menu-package.ps1 -Register [-RestartExplorer]
-#       Trusts planche-contact-menu.cer (current user's "Trusted People"),
-#       then registers the sparse package planche-contact-menu.msix with this
+#       Registers the sparse package planche-contact-menu.msix with this
 #       folder as its external location. Exit code 0: registered; 2: not
 #       applicable (Windows 10, or a build without the package); 1: failed.
 #       With -RestartExplorer, File Explorer is restarted so that the entry
 #       shows at once.
 #   menu-package.ps1 -Unregister
-#       Removes the package and the certificate.
+#       Removes the package.
+#
+# The package is unsigned: Windows 11 accepts an unsigned package whose
+# publisher carries Microsoft's "unsigned" identifier (-AllowUnsigned). A
+# self-signed one would need its certificate in the machine's trusted
+# store, hence administrator rights; the current user's store is not
+# enough.
 #
 # Failures are appended to planche-contact-verb.log in %TEMP%.
 
@@ -24,50 +29,28 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-# shell-menu/src/lib.rs: PACKAGE_NAME; tools/build-menu-package.ps1: $publisher.
+# shell-menu/src/lib.rs: PACKAGE_NAME.
 $PackageName = 'PlancheContact.ExplorerMenu'
-$Publisher = 'CN=Planche-Contact File Explorer menu'
 $dir = $PSScriptRoot
 $package = Join-Path $dir 'planche-contact-menu.msix'
-$certificate = Join-Path $dir 'planche-contact-menu.cer'
-
-# The current user's "Trusted People" store, through .NET: the Cert: drive
-# of Windows PowerShell only exists once its module is loaded.
-function Open-TrustedPeople {
-    $store = New-Object Security.Cryptography.X509Certificates.X509Store 'TrustedPeople', 'CurrentUser'
-    $store.Open('ReadWrite')
-    return $store
-}
 
 function Log([string] $message) {
     $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
     Add-Content -Path (Join-Path $env:TEMP 'planche-contact-verb.log') -Value "[$stamp] menu-package.ps1: $message" -ErrorAction SilentlyContinue
 }
 
-function Remove-Package {
-    Get-AppxPackage -Name $PackageName | Remove-AppxPackage
-    $store = Open-TrustedPeople
-    try {
-        foreach ($cert in @($store.Certificates | Where-Object { $_.Subject -eq $Publisher })) { $store.Remove($cert) }
-    } finally { $store.Close() }
-}
-
 try {
     if ($Unregister) {
-        Remove-Package
+        Get-AppxPackage -Name $PackageName | Remove-AppxPackage
         exit 0
     }
     if (-not $Register) { throw 'expected -Register or -Unregister' }
 
     if ([Environment]::OSVersion.Version.Build -lt 22000) { exit 2 }   # the new menu is Windows 11's
-    if (-not (Test-Path $package) -or -not (Test-Path $certificate)) { exit 2 }
+    if (-not (Test-Path $package)) { exit 2 }
 
-    Remove-Package   # an earlier version, and its certificate
-    $store = Open-TrustedPeople
-    try {
-        $store.Add((New-Object Security.Cryptography.X509Certificates.X509Certificate2 $certificate))
-    } finally { $store.Close() }
-    Add-AppxPackage -Path $package -ExternalLocation $dir
+    Get-AppxPackage -Name $PackageName | Remove-AppxPackage   # an earlier version
+    Add-AppxPackage -Path $package -ExternalLocation $dir -AllowUnsigned
     if ($null -eq (Get-AppxPackage -Name $PackageName)) { throw 'the package is not registered after Add-AppxPackage' }
 
     if ($RestartExplorer) {

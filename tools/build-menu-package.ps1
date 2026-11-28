@@ -1,16 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 # build-menu-package.ps1 - builds the sparse package of the Windows 11 menu
-# entry (shell-menu/packaging/) into a folder about to be installed, signed
-# with a self-signed certificate made for the occasion:
-#
-#   DIST\planche-contact-menu.msix   the package (manifest and logos only)
-#   DIST\planche-contact-menu.cer    its certificate (public part)
+# entry (shell-menu/packaging/) into a folder about to be installed, as
+# DIST\planche-contact-menu.msix: its manifest and logos only, unsigned.
 #
 # installer\menu-package.ps1 (copied to DIST too) registers it at
-# installation. Needs makeappx.exe and signtool.exe of the Windows SDK.
+# installation. Needs makeappx.exe of the Windows SDK.
 #
-# Usage (Windows PowerShell, for its PKI module):
+# Usage:
 #   powershell -File tools\build-menu-package.ps1 -Dist dist\planche-contact
 
 param(
@@ -20,8 +17,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $version = (Get-Content (Join-Path $root 'VERSION') -Raw).Trim()
-# Must match $Publisher of installer\menu-package.ps1.
-$publisher = 'CN=Planche-Contact File Explorer menu'
+# The OID marks an unsigned package, which Windows 11 installs with
+# Add-AppxPackage -AllowUnsigned (installer\menu-package.ps1): no
+# certificate to trust, hence no administrator rights.
+$publisher = 'CN=Planche-Contact, OID.2.25.311729368913984317654407730594956997722=1'
 
 function Find-SdkTool([string] $name) {
     $found = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\$name" -ErrorAction SilentlyContinue |
@@ -30,7 +29,6 @@ function Find-SdkTool([string] $name) {
     return $found.FullName
 }
 $makeappx = Find-SdkTool 'makeappx.exe'
-$signtool = Find-SdkTool 'signtool.exe'
 
 if (-not (Test-Path (Join-Path $Dist 'planche_contact_menu.dll'))) {
     throw "$Dist does not hold planche_contact_menu.dll"
@@ -49,19 +47,6 @@ $package = Join-Path $Dist 'planche-contact-menu.msix'
 & $makeappx pack /o /nv /d $stage /p $package
 if ($LASTEXITCODE -ne 0) { throw "makeappx failed ($LASTEXITCODE)" }
 
-# A new self-signed certificate for each build: only its public part is
-# shipped; the private key is thrown away once the package is signed.
-$cert = New-SelfSignedCertificate -Type Custom -Subject $publisher -KeyUsage DigitalSignature `
-    -FriendlyName 'Planche-Contact File Explorer menu' -CertStoreLocation 'Cert:\CurrentUser\My' `
-    -NotAfter (Get-Date).AddYears(20) `
-    -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
-try {
-    & $signtool sign /fd SHA256 /sha1 $cert.Thumbprint $package
-    if ($LASTEXITCODE -ne 0) { throw "signtool failed ($LASTEXITCODE)" }
-    Export-Certificate -Cert $cert -FilePath (Join-Path $Dist 'planche-contact-menu.cer') | Out-Null
-} finally {
-    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($cert.Thumbprint)" -DeleteKey -ErrorAction SilentlyContinue
-    Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
-}
+Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
 Copy-Item (Join-Path $root 'installer\menu-package.ps1') $Dist
-Write-Host "Built $package (version $version.0), signed by $publisher"
+Write-Host "Built $package (version $version.0, unsigned)"

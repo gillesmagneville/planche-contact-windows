@@ -29,12 +29,10 @@ $verbKeys = @(
     'HKCU:\Software\Classes\SystemFileAssociations\.jpg\shell\PlancheContact',
     'HKCU:\Software\Classes\SystemFileAssociations\.nef\shell\PlancheContact'
 )
-# The Windows 11 entry: shell-menu/src/lib.rs (PACKAGE_NAME) and
-# installer/menu-package.ps1 ($Publisher). Expected when the build holds its
+# The Windows 11 entry: shell-menu/src/lib.rs (PACKAGE_NAME). Expected when the build holds its
 # package and Windows is Windows 11 (or Server 2025); then the classic entry
 # is not registered.
 $packageName = 'PlancheContact.ExplorerMenu'
-$publisher = 'CN=Planche-Contact File Explorer menu'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Planche-Contact.lnk'
 $crashLog = Join-Path $env:TEMP 'planche-contact-app.log'
 
@@ -78,9 +76,6 @@ if ($firstLevel) {
         Fail "the Windows 11 menu package $packageName is not registered"
     }
     if ($package.Version -ne "$version.0") { Fail "the menu package has version $($package.Version), not $version.0" }
-    if (-not (Get-ChildItem Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Subject -eq $publisher })) {
-        Fail 'the certificate of the menu package is not trusted'
-    }
     if (Test-Path -LiteralPath $classKey) { Fail 'the classic menu handler is registered too (two entries)' }
     Write-Host "ok: the Windows 11 menu package is registered ($($package.PackageFullName))"
 } else {
@@ -129,9 +124,6 @@ foreach ($key in $verbKeys) {
 }
 if (Test-Path $shortcut) { Fail 'the Start menu shortcut is still there' }
 if (Get-AppxPackage -Name $packageName) { Fail 'the Windows 11 menu package is still registered' }
-if (Get-ChildItem Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Subject -eq $publisher }) {
-    Fail 'the certificate of the menu package is still trusted'
-}
 Write-Host 'ok: uninstalling removes the programs, the menu entry, the shortcut and the Settings entry'
 
 Write-Host 'All checks passed.'
