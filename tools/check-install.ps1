@@ -86,7 +86,7 @@ if ($firstLevel) {
     } catch {
         Fail "the class of the Windows 11 entry cannot be created: $($_.Exception.Message)"
     }
-    Write-Host 'ok: the Windows 11 entry is served by its DLL
+    Write-Host 'ok: the Windows 11 entry is served by its DLL'
 } else {
     $server = Default-Value "$classKey\LocalServer32"
     if ($server -ne "`"$dir\planche-contact-verb.exe`"") { Fail "the menu handler is registered as '$server'" }
