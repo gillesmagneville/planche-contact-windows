@@ -16,6 +16,16 @@ sur GitHub en sont tirées (voir « Publier une version » dans
 
 ## [Non publié]
 
+### Corrigé
+
+- La fenêtre suit la langue de Windows par défaut : le format régional
+  (Paramètres > Heure et langue > Région) d'abord, comme la version Linux et
+  la version précédente pour Windows, puis la langue d'affichage. Un Windows
+  français affiché en anglais ouvrait la fenêtre en anglais.
+- L'onglet Génération a l'agencement de la fenêtre Linux : libellés à gauche
+  des champs, mêmes rangées, et une fenêtre qui s'ouvre à la hauteur de son
+  contenu au lieu de devoir défiler.
+
 ## 2026-11-27 — v5.3.0
 
 Première version de **Planche-Contact pour Windows**, qui remplace la

@@ -41,21 +41,39 @@ public sealed class Translator
     /// a language without translation, English is used and
     /// <c>UnsupportedDetected</c> holds the detected code ("?" if none), so
     /// that the user can be told.
+    ///
+    /// "system" is, by default, the regional format of Windows (Settings >
+    /// Time and language > Region), then its display language: Python's
+    /// <c>locale</c>, which the Linux version and the earlier version for
+    /// Windows use, reads the regional format, and a French Windows is often
+    /// displayed in English. The first of <paramref name="systemCultures"/>
+    /// that has a translation wins.
     /// </summary>
-    public static (string Language, string? UnsupportedDetected) Resolve(string? preference, CultureInfo? systemCulture = null)
+    public static (string Language, string? UnsupportedDetected) Resolve(string? preference, params CultureInfo[] systemCultures)
     {
         if (preference is not null && preference != "system" && Languages.Contains(preference))
         {
             return (preference, null);
         }
         // "system", or a saved value this version does not know.
-        var culture = systemCulture ?? CultureInfo.CurrentUICulture;
-        var detected = culture.TwoLetterISOLanguageName.ToLowerInvariant();
-        if (Languages.Contains(detected))
+        if (systemCultures.Length == 0)
         {
-            return (detected, null);
+            systemCultures = [CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture];
         }
-        return (FallbackLanguage, string.IsNullOrEmpty(detected) || detected == "iv" ? "?" : detected);
+        string? first = null;
+        foreach (var culture in systemCultures)
+        {
+            var detected = culture.TwoLetterISOLanguageName.ToLowerInvariant();
+            if (Languages.Contains(detected))
+            {
+                return (detected, null);
+            }
+            if (first is null && !string.IsNullOrEmpty(detected) && detected != "iv")
+            {
+                first = detected;
+            }
+        }
+        return (FallbackLanguage, first ?? "?");
     }
 
     /// <summary>Text of <paramref name="key"/> in the language of the interface.</summary>
