@@ -21,6 +21,13 @@ GitHub are taken from it (see "Publishing a release" in `CONTRIBUTING.md`).
   format (Settings > Time & language > Region) is used first, as the Linux
   version and the earlier version for Windows do, then the display language.
   A French Windows displayed in English used to open the window in English.
+- **"Open in Planche-Contact" is on the first level of the Windows 11
+  menu**, as in the earlier version for Windows: a sparse package signed
+  with a self-signed certificate, added for the current user only, without
+  administrator rights; File Explorer restarts once at installation. The
+  entry is handled by a DLL in a COM surrogate (`dllhost.exe`), never inside
+  `explorer.exe`. On Windows 10, or where the package cannot be registered,
+  the classic entry stays ("Show more options" on Windows 11).
 - The Generation tab has the layout of the Linux window: labels on the left
   of their fields, the same rows, and a window that opens at the height of
   its content instead of having to be scrolled.

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-License-Identifier: GPL-3.0-only
+
+  Sparse package (package with external location) of the Windows 11 menu
+  entry "Open in Planche-Contact". It holds only this manifest and its logos:
+  the files (planche_contact_menu.dll, PlancheContact.exe) stay in the
+  installation folder, given at registration by
+  Add-AppxPackage -ExternalLocation (installer/menu-package.ps1).
+
+  tools/build-menu-package.ps1 replaces @VERSION@ and @PUBLISHER@. The class
+  identifier is CLSID of shell-menu/src/lib.rs (a test compares them).
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  IgnorableNamespaces="uap uap10 rescap desktop4 desktop5 com">
+
+  <Identity Name="PlancheContact.ExplorerMenu" Publisher="@PUBLISHER@" Version="@VERSION@" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Planche-Contact (File Explorer menu)</DisplayName>
+    <PublisherDisplayName>Gilles MAGNEVILLE</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+  </Properties>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+
+  <Applications>
+    <Application Id="PlancheContact" Executable="PlancheContact.exe" uap10:TrustLevel="mediumIL" uap10:RuntimeBehavior="win32App">
+      <uap:VisualElements AppListEntry="none" DisplayName="Planche-Contact"
+        Description="Planche-Contact File Explorer menu" BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <!-- First level of the Windows 11 menu: on files (the DLL hides the
+             entry unless a photo or a folder is selected), on folders and on
+             the background of a folder. -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type="*">
+              <desktop5:Verb Id="PlancheContact" Clsid="5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type="Directory">
+              <desktop5:Verb Id="PlancheContact" Clsid="5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type="Directory\Background">
+              <desktop5:Verb Id="PlancheContact" Clsid="5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+        <!-- The class behind the entry, in a COM surrogate (dllhost.exe),
+             never inside explorer.exe. -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="Planche-Contact File Explorer menu">
+              <com:Class Id="5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6" Path="planche_contact_menu.dll" ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

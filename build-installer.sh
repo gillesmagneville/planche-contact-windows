@@ -77,10 +77,10 @@ if [ -n "$APP_DIR" ]; then
         need x86_64-w64-mingw32-g++-posix "sudo apt-get install gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix"
         echo "==> Building the Rust programs for Windows"
         (cd "$ROOT" && cargo build --release --locked --target "$TARGET" \
-            -p planche-contact-engine -p planche-contact-verb)
+            -p planche-contact-engine -p planche-contact-verb -p planche-contact-menu)
     fi
     RUST_OUT="$ROOT/target/$TARGET/release"
-    for exe in planche-contact-engine.exe "$VERB_EXE"; do
+    for exe in planche-contact-engine.exe "$VERB_EXE" planche_contact_menu.dll; do
         [ -f "$RUST_OUT/$exe" ] || die "$RUST_OUT/$exe not found: build the Rust programs first"
     done
 
@@ -91,6 +91,11 @@ if [ -n "$APP_DIR" ]; then
     cp -a "$APP_DIR/." "$DIST_DIR/"
     cp "$RUST_OUT/planche-contact-engine.exe" "$DIST_DIR/engine/"
     cp "$RUST_OUT/$VERB_EXE" "$DIST_DIR/"
+    # The Windows 11 menu entry: its DLL and its registration script. Its
+    # package is built and signed on Windows only (tools/build-menu-package.ps1):
+    # without it, the installer registers the classic entry.
+    cp "$RUST_OUT/planche_contact_menu.dll" "$DIST_DIR/"
+    cp "$ROOT/installer/menu-package.ps1" "$DIST_DIR/"
     mkdir -p "$DIST_DIR/docs"
     cp "$ROOT"/docs/planche-contact-manual*.html "$DIST_DIR/docs/"
 fi

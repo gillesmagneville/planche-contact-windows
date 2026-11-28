@@ -15,6 +15,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# The Appx cmdlets come from Windows PowerShell.
+if ($PSVersionTable.PSEdition -eq 'Core') { Import-Module Appx -UseWindowsPowerShell -WarningAction SilentlyContinue }
 
 $version = (Get-Content (Join-Path $PSScriptRoot '..\VERSION') -Raw).Trim()
 $dir = Join-Path $env:LOCALAPPDATA 'Programs\Planche-Contact'
@@ -27,6 +29,12 @@ $verbKeys = @(
     'HKCU:\Software\Classes\SystemFileAssociations\.jpg\shell\PlancheContact',
     'HKCU:\Software\Classes\SystemFileAssociations\.nef\shell\PlancheContact'
 )
+# The Windows 11 entry: shell-menu/src/lib.rs (PACKAGE_NAME) and
+# installer/menu-package.ps1 ($Publisher). Expected when the build holds its
+# package and Windows is Windows 11 (or Server 2025); then the classic entry
+# is not registered.
+$packageName = 'PlancheContact.ExplorerMenu'
+$publisher = 'CN=Planche-Contact File Explorer menu'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Planche-Contact.lnk'
 $crashLog = Join-Path $env:TEMP 'planche-contact-app.log'
 
@@ -60,14 +68,26 @@ if ($entry.DisplayVersion -ne $version) { Fail "Settings > Apps shows version '$
 if ($entry.EstimatedSize -lt 1000) { Fail "implausible installed size: $($entry.EstimatedSize) KB" }
 Write-Host "ok: Settings > Apps shows Planche-Contact $version ($([int]($entry.EstimatedSize / 1024)) MB)"
 
-$server = Default-Value "$classKey\LocalServer32"
-if ($server -ne "`"$dir\planche-contact-verb.exe`"") { Fail "the menu handler is registered as '$server'" }
-foreach ($key in $verbKeys) {
-    if (-not (Test-Path -LiteralPath $key)) { Fail "no menu entry under $key" }
-    $label = Default-Value $key
-    if ($label -notmatch 'Planche-Contact') { Fail "unexpected menu label '$label' under $key" }
+$firstLevel = ([Environment]::OSVersion.Version.Build -ge 22000) -and (Test-Path (Join-Path $dir 'planche-contact-menu.msix'))
+if ($firstLevel) {
+    $package = Get-AppxPackage -Name $packageName
+    if ($null -eq $package) { Fail "the Windows 11 menu package $packageName is not registered" }
+    if ($package.Version -ne "$version.0") { Fail "the menu package has version $($package.Version), not $version.0" }
+    if (-not (Get-ChildItem Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Subject -eq $publisher })) {
+        Fail 'the certificate of the menu package is not trusted'
+    }
+    if (Test-Path -LiteralPath $classKey) { Fail 'the classic menu handler is registered too (two entries)' }
+    Write-Host "ok: the Windows 11 menu package is registered ($($package.PackageFullName))"
+} else {
+    $server = Default-Value "$classKey\LocalServer32"
+    if ($server -ne "`"$dir\planche-contact-verb.exe`"") { Fail "the menu handler is registered as '$server'" }
+    foreach ($key in $verbKeys) {
+        if (-not (Test-Path -LiteralPath $key)) { Fail "no menu entry under $key" }
+        $label = Default-Value $key
+        if ($label -notmatch 'Planche-Contact') { Fail "unexpected menu label '$label' under $key" }
+    }
+    Write-Host "ok: the File Explorer menu entry is registered ('$(Default-Value $verbKeys[0])')"
 }
-Write-Host "ok: the File Explorer menu entry is registered ('$(Default-Value $verbKeys[0])')"
 
 if (-not (Test-Path $shortcut)) { Fail "no Start menu shortcut ($shortcut)" }
 Write-Host 'ok: Start menu shortcut'
@@ -103,6 +123,10 @@ foreach ($key in $verbKeys) {
     if (Test-Path -LiteralPath $key) { Fail "the menu entry under $key is still there" }
 }
 if (Test-Path $shortcut) { Fail 'the Start menu shortcut is still there' }
+if (Get-AppxPackage -Name $packageName) { Fail 'the Windows 11 menu package is still registered' }
+if (Get-ChildItem Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Subject -eq $publisher }) {
+    Fail 'the certificate of the menu package is still trusted'
+}
 Write-Host 'ok: uninstalling removes the programs, the menu entry, the shortcut and the Settings entry'
 
 Write-Host 'All checks passed.'

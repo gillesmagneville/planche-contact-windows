@@ -135,6 +135,27 @@ adapted:
   `--paths-from`. The engine's `selection` command reads that file and
   deletes it.
 
+On Windows 11 the first level of the menu only shows entries declared by a
+package. `shell-menu/` is that entry:
+
+* `planche_contact_menu.dll` implements `IExplorerCommand` (class
+  `{5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6}`): its title in the user's
+  language (`labels.rs`), the window's icon, hidden unless a photo or a
+  folder is selected, and on a click the same hand-over as the classic
+  handler (`launch.rs`).
+* The sparse package `planche-contact-menu.msix` (`shell-menu/packaging/`)
+  declares it, in a COM surrogate: `dllhost.exe` loads the DLL, never
+  `explorer.exe`. It holds only its manifest and logos; the files stay in
+  the installation folder (`-ExternalLocation`).
+* `tools/build-menu-package.ps1` builds and signs the package in the
+  workflow, with a self-signed certificate made for each build;
+  `planche-contact-menu.cer` is its public part.
+* `menu-package.ps1`, installed with the programs, trusts the certificate
+  (current user's "Trusted People") and registers the package, or removes
+  both. When the package is registered, the classic entry is not: one entry
+  only under "Show more options". On Windows 10, or if the registration
+  fails, the classic entry is used.
+
 ## The installer (`installer/`)
 
 NSIS, built on Linux by `build-installer.sh`. Per user
@@ -149,6 +170,7 @@ Installed layout:
 %LOCALAPPDATA%\Programs\Planche-Contact\
     PlancheContact.exe, PlancheContact.pri, .NET and Windows App SDK files
     planche-contact-verb.exe
+    planche_contact_menu.dll, planche-contact-menu.msix, .cer, menu-package.ps1
     engine\planche-contact-engine.exe
     docs\planche-contact-manual[.en|.de|.es].html
     Uninstall.exe
@@ -161,6 +183,7 @@ Installed layout:
 | The extensions of `engine/src/scanner.rs` | `shell-verb/src/extensions.rs` (a test compares them) |
 | A program name | `shell-verb/src/plan.rs`, `installer/installer.nsi`, the `.csproj`, `build-installer.sh` (tests compare the first three) |
 | The menu labels | `shell-verb/src/labels.rs` and the last page of `installer/installer.nsi` (a test compares them) |
+| The class, DLL or package name of the Windows 11 entry | `shell-menu/src/lib.rs` and `shell-menu/packaging/AppxManifest.template.xml` (a test compares them), `installer/menu-package.ps1`, `tools/check-install.ps1` |
 | A choice list of the engine (`info`) | `Choices` in `app/PlancheContact.Core/Profile.cs` (a test compares them) |
 | An engine command or event | `app/PlancheContact.Core/Engine/` and `PROTOCOL_VERSION` if a shape changes |
 | `locales/*.py` | Nothing here: take the Linux files as they are |

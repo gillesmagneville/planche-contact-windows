@@ -66,8 +66,7 @@ entrées. La nouvelle version reprend ses derniers dossiers et sa langue.
   dossier d'entrée, ou dans le dossier de sortie choisi ; **Afficher les
   résultats** les ouvre.
 - **Depuis l'Explorateur de fichiers** : sélectionnez un dossier ou des
-  photos, clic droit, **Ouvrir dans Planche-Contact** (sous Windows 11, dans
-  **Afficher plus d'options**). La fenêtre s'ouvre sur ce dossier, ou sur
+  photos, clic droit, **Ouvrir dans Planche-Contact**. La fenêtre s'ouvre sur ce dossier, ou sur
   exactement les photos sélectionnées.
 
 Le manuel complet est dans l'onglet **Aide** de la fenêtre, en quatre

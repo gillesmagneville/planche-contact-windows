@@ -22,6 +22,14 @@ sur GitHub en sont tirées (voir « Publier une version » dans
   (Paramètres > Heure et langue > Région) d'abord, comme la version Linux et
   la version précédente pour Windows, puis la langue d'affichage. Un Windows
   français affiché en anglais ouvrait la fenêtre en anglais.
+- **« Ouvrir dans Planche-Contact » est au premier niveau du menu de
+  Windows 11**, comme dans la version précédente pour Windows : un paquet
+  partiel signé par un certificat auto-signé, ajouté pour l'utilisateur
+  courant seulement, sans droits d'administrateur ; l'Explorateur redémarre
+  une fois à l'installation. L'entrée est gérée par une DLL dans un
+  substitut COM (`dllhost.exe`), jamais dans `explorer.exe`. Sous Windows 10,
+  ou si le paquet ne peut pas être enregistré, l'entrée classique reste
+  (« Afficher plus d'options » sous Windows 11).
 - L'onglet Génération a l'agencement de la fenêtre Linux : libellés à gauche
   des champs, mêmes rangées, et une fenêtre qui s'ouvre à la hauteur de son
   contenu au lieu de devoir défiler.

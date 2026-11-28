@@ -43,6 +43,9 @@ Unicode true
 ; The earlier version for Windows (GTK window, installed for all users).
 !define OLD_UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PlancheContact"
 !define PROJECT_URL "https://github.com/gillesmagneville/planche-contact-windows"
+; Windows PowerShell, 64-bit (the installer is a 32-bit program: "sysnative"
+; reaches the real System32), for menu-package.ps1.
+!define POWERSHELL "$WINDIR\sysnative\WindowsPowerShell\v1.0\powershell.exe"
 
 Name "${PRODUCT}"
 OutFile "${OUTFILE}"
@@ -81,10 +84,10 @@ SetCompressor /SOLID lzma
 
 ; The quoted menu entry must be the text the handler registers for the same
 ; language (shell-verb/src/labels.rs - its tests check this file).
-LangString FINISH_TEXT ${LANG_ENGLISH} "${PRODUCT} is installed.$\r$\n$\r$\nStart it from the Start menu, or in File Explorer: select photos or a folder, right-click, then choose “Open in Planche-Contact”.$\r$\n$\r$\nOn Windows 11, this entry is under “Show more options”."
-LangString FINISH_TEXT ${LANG_FRENCH}  "${PRODUCT} est installé.$\r$\n$\r$\nLancez-le depuis le menu Démarrer, ou dans l'Explorateur de fichiers : sélectionnez des photos ou un dossier, faites un clic droit, puis choisissez « Ouvrir dans Planche-Contact ».$\r$\n$\r$\nSous Windows 11, cette entrée se trouve dans « Afficher plus d'options »."
-LangString FINISH_TEXT ${LANG_SPANISH} "${PRODUCT} está instalado.$\r$\n$\r$\nInícielo desde el menú Inicio, o en el Explorador de archivos: seleccione fotos o una carpeta, haga clic con el botón derecho y elija «Abrir en Planche-Contact».$\r$\n$\r$\nEn Windows 11, esta entrada está en «Mostrar más opciones»."
-LangString FINISH_TEXT ${LANG_GERMAN}  "${PRODUCT} ist installiert.$\r$\n$\r$\nStarten Sie es über das Startmenü oder im Datei-Explorer: Wählen Sie Fotos oder einen Ordner aus, klicken Sie mit der rechten Maustaste und wählen Sie „In Planche-Contact öffnen“.$\r$\n$\r$\nUnter Windows 11 befindet sich dieser Eintrag unter „Weitere Optionen anzeigen“."
+LangString FINISH_TEXT ${LANG_ENGLISH} "${PRODUCT} is installed.$\r$\n$\r$\nStart it from the Start menu, or in File Explorer: select photos or a folder, right-click, then choose “Open in Planche-Contact”."
+LangString FINISH_TEXT ${LANG_FRENCH}  "${PRODUCT} est installé.$\r$\n$\r$\nLancez-le depuis le menu Démarrer, ou dans l'Explorateur de fichiers : sélectionnez des photos ou un dossier, faites un clic droit, puis choisissez « Ouvrir dans Planche-Contact »."
+LangString FINISH_TEXT ${LANG_SPANISH} "${PRODUCT} está instalado.$\r$\n$\r$\nInícielo desde el menú Inicio, o en el Explorador de archivos: seleccione fotos o una carpeta, haga clic con el botón derecho y elija «Abrir en Planche-Contact»."
+LangString FINISH_TEXT ${LANG_GERMAN}  "${PRODUCT} ist installiert.$\r$\n$\r$\nStarten Sie es über das Startmenü oder im Datei-Explorer: Wählen Sie Fotos oder einen Ordner aus, klicken Sie mit der rechten Maustaste und wählen Sie „In Planche-Contact öffnen“."
 
 LangString ERR_WINDOWS ${LANG_ENGLISH} "${PRODUCT} needs a 64-bit Windows 10 (version 1809 or later) or Windows 11."
 LangString ERR_WINDOWS ${LANG_FRENCH}  "${PRODUCT} nécessite Windows 10 (version 1809 ou ultérieure) ou Windows 11, en 64 bits."
@@ -190,6 +193,10 @@ Section "Install"
     ; (the list of file types may differ between versions), then the files
     ; of the previous version (none must linger among those of the new one).
     ${If} ${FileExists} "$INSTDIR\${VERB_EXE}"
+        ${If} ${FileExists} "$INSTDIR\menu-package.ps1"
+            nsExec::Exec '"${POWERSHELL}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\menu-package.ps1" -Unregister'
+            Pop $0
+        ${EndIf}
         ExecWait '"$INSTDIR\${VERB_EXE}" --unregister'
         RMDir /r "$INSTDIR"
     ${EndIf}
@@ -216,10 +223,24 @@ Section "Install"
     ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
     WriteRegDWORD HKCU "${UNINSTALL_KEY}" "EstimatedSize" "$0"
 
-    ; "Open in Planche-Contact" in the File Explorer menu.
-    ExecWait '"$INSTDIR\${VERB_EXE}" --register' $0
-    ${If} $0 != 0
-        MessageBox MB_OK|MB_ICONEXCLAMATION "$(ERR_MENU)" /SD IDOK
+    ; "Open in Planche-Contact" in the File Explorer menu. On Windows 11, on
+    ; the first level of the menu: a sparse package (menu-package.ps1 says 0
+    ; when it is registered, 2 on Windows 10). Otherwise, or if that fails,
+    ; the classic entry ("Show more options" on Windows 11) - never both,
+    ; which would show the entry twice under "Show more options". File
+    ; Explorer is restarted after an interactive installation, so that the
+    ; new entry shows at once.
+    StrCpy $1 " -RestartExplorer"
+    ${If} ${Silent}
+        StrCpy $1 ""
+    ${EndIf}
+    nsExec::Exec '"${POWERSHELL}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\menu-package.ps1" -Register$1'
+    Pop $2
+    ${If} $2 != 0
+        ExecWait '"$INSTDIR\${VERB_EXE}" --register' $0
+        ${If} $0 != 0
+            MessageBox MB_OK|MB_ICONEXCLAMATION "$(ERR_MENU)" /SD IDOK
+        ${EndIf}
     ${EndIf}
 
     ; Start Menu shortcut.
@@ -231,7 +252,9 @@ SectionEnd
 Section "Uninstall"
     SetShellVarContext current
 
-    ; First the menu entries, while the handler that removes them is there.
+    ; First the menu entries, while what removes them is there.
+    nsExec::Exec '"${POWERSHELL}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\menu-package.ps1" -Unregister'
+    Pop $0
     ExecWait '"$INSTDIR\${VERB_EXE}" --unregister'
 
     Delete "$SMPROGRAMS\${PRODUCT}.lnk"

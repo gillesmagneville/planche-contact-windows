@@ -139,6 +139,28 @@ adapté :
   `--paths-from`. La commande `selection` du moteur lit ce fichier et le
   supprime.
 
+Sous Windows 11, le premier niveau du menu n'affiche que des entrées
+déclarées par un paquet. `shell-menu/` est cette entrée :
+
+* `planche_contact_menu.dll` implémente `IExplorerCommand` (classe
+  `{5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6}`) : son titre dans la langue de
+  l'utilisateur (`labels.rs`), l'icône de la fenêtre, masquée sauf si une
+  photo ou un dossier est sélectionné, et au clic la même transmission que
+  le gestionnaire classique (`launch.rs`).
+* Le paquet partiel `planche-contact-menu.msix` (`shell-menu/packaging/`)
+  la déclare, dans un substitut COM : c'est `dllhost.exe` qui charge la DLL,
+  jamais `explorer.exe`. Il ne contient que son manifeste et ses logos ; les
+  fichiers restent dans le dossier d'installation (`-ExternalLocation`).
+* `tools/build-menu-package.ps1` construit et signe le paquet dans le
+  workflow, avec un certificat auto-signé créé à chaque construction ;
+  `planche-contact-menu.cer` en est la partie publique.
+* `menu-package.ps1`, installé avec les programmes, fait confiance au
+  certificat (« Personnes autorisées » de l'utilisateur) et enregistre le
+  paquet, ou retire les deux. Quand le paquet est enregistré, l'entrée
+  classique ne l'est pas : une seule entrée dans « Afficher plus
+  d'options ». Sous Windows 10, ou si l'enregistrement échoue, l'entrée
+  classique est utilisée.
+
 ## L'installeur (`installer/`)
 
 NSIS, construit sous Linux par `build-installer.sh`. Par utilisateur
@@ -154,6 +176,7 @@ Contenu installé :
 %LOCALAPPDATA%\Programs\Planche-Contact\
     PlancheContact.exe, PlancheContact.pri, fichiers .NET et Windows App SDK
     planche-contact-verb.exe
+    planche_contact_menu.dll, planche-contact-menu.msix, .cer, menu-package.ps1
     engine\planche-contact-engine.exe
     docs\planche-contact-manual[.en|.de|.es].html
     Uninstall.exe
@@ -166,6 +189,7 @@ Contenu installé :
 | Les extensions de `engine/src/scanner.rs` | `shell-verb/src/extensions.rs` (un test les compare) |
 | Le nom d'un programme | `shell-verb/src/plan.rs`, `installer/installer.nsi`, le `.csproj`, `build-installer.sh` (des tests comparent les trois premiers) |
 | Les libellés du menu | `shell-verb/src/labels.rs` et la dernière page d'`installer/installer.nsi` (un test les compare) |
+| La classe, la DLL ou le nom du paquet de l'entrée Windows 11 | `shell-menu/src/lib.rs` et `shell-menu/packaging/AppxManifest.template.xml` (un test les compare), `installer/menu-package.ps1`, `tools/check-install.ps1` |
 | Une liste de choix du moteur (`info`) | `Choices` dans `app/PlancheContact.Core/Profile.cs` (un test les compare) |
 | Une commande ou un événement du moteur | `app/PlancheContact.Core/Engine/`, et `PROTOCOL_VERSION` si une forme change |
 | `locales/*.py` | Rien ici : reprendre les fichiers Linux tels quels |

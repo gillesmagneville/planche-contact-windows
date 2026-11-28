@@ -130,8 +130,11 @@ there through emulation, but this has not been verified.
   are left off the sheets and reported in the log (they still appear in the
   CSV index).
 * **The installer is not code-signed**: SmartScreen asks for confirmation.
-* **On Windows 11**, the menu entry is under **Show more options**: the
-  first-level menu would need a packaged, signed application.
+* **On Windows 11**, the first-level menu entry comes from a sparse package
+  signed with a self-signed certificate, which the installer adds to the
+  user's "Trusted People" (and the uninstaller removes); File Explorer is
+  restarted once at installation. Where the package cannot be registered,
+  the classic entry, under **Show more options**, is used instead.
 * **One window per launch**: opening Planche-Contact again, from the menu
   or the Start menu, opens a second window rather than reusing the first.
 * The complete chain — menu, handler, window — can only be checked on a
@@ -142,7 +145,6 @@ there through emulation, but this has not been verified.
 # Roadmap
 
 * A code-signed installer, which would remove the SmartScreen warning.
-* An entry in the first-level menu of Windows 11.
 * Reading HEIC/HEIF, together with the Linux version.
 * A single window, to which a second launch hands its folder.
 * Whatever the Linux version gains (layouts, options, languages).

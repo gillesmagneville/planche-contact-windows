@@ -63,7 +63,7 @@ shows two entries. The new version keeps its last folders and language.
   **Start generation**. The results go to `Portfolio\` in the input folder, or to the
   output folder you choose; **View results** opens them.
 - **From File Explorer**: select a folder or photos, right-click, **Open in
-  Planche-Contact** (on Windows 11, under **Show more options**). The window
+  Planche-Contact**. The window
   opens with that folder, or with exactly the selected photos.
 
 The full manual is in the **Help** tab of the window, in the four languages
