@@ -78,6 +78,15 @@ if ($firstLevel) {
     if ($package.Version -ne "$version.0") { Fail "the menu package has version $($package.Version), not $version.0" }
     if (Test-Path -LiteralPath $classKey) { Fail 'the classic menu handler is registered too (two entries)' }
     Write-Host "ok: the Windows 11 menu package is registered ($($package.PackageFullName))"
+    # What File Explorer does first: obtain the class of the entry, which COM
+    # serves from planche_contact_menu.dll in a surrogate (dllhost.exe).
+    try {
+        $command = [Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'5E3D6C2A-9B41-4F7E-A0C8-3F2B7D91C4E6'))
+        [void][Runtime.InteropServices.Marshal]::ReleaseComObject($command)
+    } catch {
+        Fail "the class of the Windows 11 entry cannot be created: $($_.Exception.Message)"
+    }
+    Write-Host 'ok: the Windows 11 entry is served by its DLL
 } else {
     $server = Default-Value "$classKey\LocalServer32"
     if ($server -ne "`"$dir\planche-contact-verb.exe`"") { Fail "the menu handler is registered as '$server'" }
