@@ -130,10 +130,9 @@ there through emulation, but this has not been verified.
   are left off the sheets and reported in the log (they still appear in the
   CSV index).
 * **The installer is not code-signed**: SmartScreen asks for confirmation.
-* **On Windows 11**, the first-level menu entry comes from a sparse package
-  signed with a self-signed certificate, which the installer adds to the
-  user's "Trusted People" (and the uninstaller removes); File Explorer is
-  restarted once at installation. Where the package cannot be registered,
+* **On Windows 11**, the first-level menu entry comes from an unsigned
+  sparse package, which Windows 11 accepts for the current user; File
+  Explorer is restarted once at installation. Where the package cannot be registered,
   the classic entry, under **Show more options**, is used instead.
 * **One window per launch**: opening Planche-Contact again, from the menu
   or the Start menu, opens a second window rather than reusing the first.

@@ -147,12 +147,13 @@ package. `shell-menu/` is that entry:
   declares it, in a COM surrogate: `dllhost.exe` loads the DLL, never
   `explorer.exe`. It holds only its manifest and logos; the files stay in
   the installation folder (`-ExternalLocation`).
-* `tools/build-menu-package.ps1` builds and signs the package in the
-  workflow, with a self-signed certificate made for each build;
-  `planche-contact-menu.cer` is its public part.
-* `menu-package.ps1`, installed with the programs, trusts the certificate
-  (current user's "Trusted People") and registers the package, or removes
-  both. When the package is registered, the classic entry is not: one entry
+* `tools/build-menu-package.ps1` builds the package in the workflow,
+  unsigned: its publisher carries Microsoft's "unsigned" identifier, which
+  Windows 11 installs with `Add-AppxPackage -AllowUnsigned`. (A self-signed
+  package would need its certificate in the machine's trusted store, so
+  administrator rights.)
+* `menu-package.ps1`, installed with the programs, registers the package, or
+  removes it. When the package is registered, the classic entry is not: one entry
   only under "Show more options". On Windows 10, or if the registration
   fails, the classic entry is used.
 
@@ -170,7 +171,7 @@ Installed layout:
 %LOCALAPPDATA%\Programs\Planche-Contact\
     PlancheContact.exe, PlancheContact.pri, .NET and Windows App SDK files
     planche-contact-verb.exe
-    planche_contact_menu.dll, planche-contact-menu.msix, .cer, menu-package.ps1
+    planche_contact_menu.dll, planche-contact-menu.msix, menu-package.ps1
     engine\planche-contact-engine.exe
     docs\planche-contact-manual[.en|.de|.es].html
     Uninstall.exe

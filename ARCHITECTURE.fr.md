@@ -151,12 +151,13 @@ déclarées par un paquet. `shell-menu/` est cette entrée :
   la déclare, dans un substitut COM : c'est `dllhost.exe` qui charge la DLL,
   jamais `explorer.exe`. Il ne contient que son manifeste et ses logos ; les
   fichiers restent dans le dossier d'installation (`-ExternalLocation`).
-* `tools/build-menu-package.ps1` construit et signe le paquet dans le
-  workflow, avec un certificat auto-signé créé à chaque construction ;
-  `planche-contact-menu.cer` en est la partie publique.
-* `menu-package.ps1`, installé avec les programmes, fait confiance au
-  certificat (« Personnes autorisées » de l'utilisateur) et enregistre le
-  paquet, ou retire les deux. Quand le paquet est enregistré, l'entrée
+* `tools/build-menu-package.ps1` construit le paquet dans le workflow, non
+  signé : son éditeur porte l'identifiant « non signé » de Microsoft, que
+  Windows 11 installe avec `Add-AppxPackage -AllowUnsigned`. (Un paquet
+  auto-signé demanderait son certificat dans le magasin de confiance de la
+  machine, donc des droits d'administrateur.)
+* `menu-package.ps1`, installé avec les programmes, enregistre le paquet, ou
+  le retire. Quand le paquet est enregistré, l'entrée
   classique ne l'est pas : une seule entrée dans « Afficher plus
   d'options ». Sous Windows 10, ou si l'enregistrement échoue, l'entrée
   classique est utilisée.
@@ -176,7 +177,7 @@ Contenu installé :
 %LOCALAPPDATA%\Programs\Planche-Contact\
     PlancheContact.exe, PlancheContact.pri, fichiers .NET et Windows App SDK
     planche-contact-verb.exe
-    planche_contact_menu.dll, planche-contact-menu.msix, .cer, menu-package.ps1
+    planche_contact_menu.dll, planche-contact-menu.msix, menu-package.ps1
     engine\planche-contact-engine.exe
     docs\planche-contact-manual[.en|.de|.es].html
     Uninstall.exe

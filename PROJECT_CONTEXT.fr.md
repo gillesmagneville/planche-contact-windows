@@ -138,9 +138,8 @@ devraient y fonctionner par émulation, mais ce n'est pas vérifié.
 * **L'installeur n'est pas signé numériquement** : SmartScreen demande une
   confirmation.
 * **Sous Windows 11**, l'entrée au premier niveau du menu vient d'un paquet
-  partiel signé par un certificat auto-signé, que l'installeur ajoute aux
-  « Personnes autorisées » de l'utilisateur (et que le désinstalleur
-  retire) ; l'Explorateur redémarre une fois à l'installation. Si le paquet
+  partiel non signé, que Windows 11 accepte pour l'utilisateur courant ;
+  l'Explorateur redémarre une fois à l'installation. Si le paquet
   ne peut pas être enregistré, l'entrée classique, dans **Afficher plus
   d'options**, est utilisée à la place.
 * **Une fenêtre par lancement** : rouvrir Planche-Contact, depuis le menu ou

@@ -24,8 +24,8 @@ sur GitHub en sont tirées (voir « Publier une version » dans
   français affiché en anglais ouvrait la fenêtre en anglais.
 - **« Ouvrir dans Planche-Contact » est au premier niveau du menu de
   Windows 11**, comme dans la version précédente pour Windows : un paquet
-  partiel signé par un certificat auto-signé, ajouté pour l'utilisateur
-  courant seulement, sans droits d'administrateur ; l'Explorateur redémarre
+  partiel non signé, enregistré pour l'utilisateur courant seulement, sans
+  droits d'administrateur ni ajout de certificat ; l'Explorateur redémarre
   une fois à l'installation. L'entrée est gérée par une DLL dans un
   substitut COM (`dllhost.exe`), jamais dans `explorer.exe`. Sous Windows 10,
   ou si le paquet ne peut pas être enregistré, l'entrée classique reste
