@@ -89,7 +89,7 @@ fn notify_serving_thread(message: u32) {
 
 /// File-system paths of the selected items; items that are not files or
 /// folders on disk (a library, a phone…) have none and are left out.
-fn selection_paths(items: &IShellItemArray) -> Vec<String> {
+pub fn selection_paths(items: &IShellItemArray) -> Vec<String> {
     let mut paths = Vec::new();
     // SAFETY: COM calls on a valid interface; the returned string is copied
     // then released with the allocator that created it.
@@ -408,10 +408,7 @@ mod tests {
     /// Stand-in for the application: this very test program, which exits at
     /// once when started with arguments it does not know.
     fn use_stand_in_application() {
-        std::env::set_var(
-            "PLANCHE_CONTACT_APP",
-            std::env::current_exe().unwrap(),
-        );
+        std::env::set_var("PLANCHE_CONTACT_APP", std::env::current_exe().unwrap());
     }
 
     /// Looks, in the temporary folder, for the selection file that this

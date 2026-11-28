@@ -155,7 +155,11 @@ public sealed partial class MainWindow : Window
         Closed += (_, _) => CleanUp();
         if (Content is FrameworkElement root)
         {
-            root.Loaded += async (_, _) => await OnFirstShownAsync();
+            root.Loaded += async (_, _) =>
+            {
+                FitWindowToContent();
+                await OnFirstShownAsync();
+            };
         }
     }
 
@@ -266,40 +270,48 @@ public sealed partial class MainWindow : Window
 
     // -------------------------------------------------- Generation tab
 
+    // Widths of the fields, as the width_chars of the Linux window (about
+    // 8 px per character).
+    private const double TitleWidth = 360, AuthorWidth = 290, FolderWidth = 545, WatermarkWidth = 150, SliderWidth = 220;
+    private const double LogMinHeight = 120;
+
+    private readonly ScrollViewer _formScroll = new()
+    {
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+    };
+    private readonly Grid _bottomPart = new() { RowSpacing = 12 };
+
     private void BuildGenerationTab()
     {
-        // Two parts, as in the Linux window: the form, which scrolls on a small
-        // screen, and the bottom (buttons, status, progress, log), always
-        // visible.
-        _generationTab.Padding = new Thickness(24, 12, 24, 16);
-        _generationTab.RowSpacing = 10;
-        foreach (var height in new[] { Ui.Star(3), GridLength.Auto, GridLength.Auto, GridLength.Auto, Ui.Star(1) })
-        {
-            _generationTab.RowDefinitions.Add(new RowDefinition { Height = height });
-        }
+        // Two parts, as in the Linux window: the form, at its natural height
+        // (it only scrolls when the screen is too small for it), and the
+        // bottom — buttons, status, progress, log — always visible; the log
+        // takes the rest of the height. Labels are on the left of their field,
+        // and the rows are those of the Linux window.
+        _generationTab.Padding = new Thickness(25, 12, 25, 16);
+        _generationTab.RowSpacing = 12;
+        _generationTab.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        _generationTab.RowDefinitions.Add(new RowDefinition { Height = Ui.Star() });
 
-        var form = new StackPanel { Spacing = 14, Padding = new Thickness(0, 0, 16, 8) };
-        var formScroll = new ScrollViewer
-        {
-            Content = form,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
-        Ui.Place(_generationTab, formScroll, row: 0);
+        var form = new StackPanel { Spacing = 12, Padding = new Thickness(4) };
+        _formScroll.Content = form;
+        Ui.Place(_generationTab, _formScroll, row: 0);
 
-        // Project title + author.
-        var names = Ui.Columns(Ui.Star(5), Ui.Star(4));
-        _title.Header = _t.Header("gen.project_title");
-        _author.Header = _t.Header("gen.author");
-        Ui.Place(names, _title, row: 0);
-        Ui.Place(names, _author, row: 0, column: 1);
+        // Project title + author, on one row.
+        var names = Ui.Line();
+        _title.Width = TitleWidth;
+        _author.Width = AuthorWidth;
+        names.Children.Add(Ui.Label(_t.T("gen.project_title"), _title));
+        names.Children.Add(_title);
+        names.Children.Add(Ui.Label(_t.T("gen.author"), _author, marginStart: 15));
+        names.Children.Add(_author);
         form.Children.Add(names);
 
         // Input folder.
-        _input.Header = _t.Header("gen.input_dir");
         _input.Text = _settings.LastInputDir;
         _input.TextChanged += (_, _) => OnInputChanged();
-        form.Children.Add(FolderRow(_input, "input"));
+        form.Children.Add(FolderRow(_input, "gen.input_dir"));
 
         // Photos received from a context menu, and the way back to the whole folder.
         var clear = new Button { Content = _t.T("gen.selection_clear") };
@@ -317,16 +329,15 @@ public sealed partial class MainWindow : Window
         form.Children.Add(BuildPreviewStrip());
 
         // Output folder.
-        _output.Header = _t.Header("gen.output_dir");
         _output.Text = _settings.LastOutputDir;
         _output.TextChanged += (_, _) => Restart(_outputTimer);
-        form.Children.Add(FolderRow(_output, "output"));
+        form.Children.Add(FolderRow(_output, "gen.output_dir"));
 
         form.Children.Add(BuildOptions());
 
         // Buttons.
         var buttons = new Grid();
-        var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
         _runButton.Click += (_, _) => StartGeneration();
         var advanced = new Button { Content = _t.T("adv.open_button") };
         ToolTipService.SetToolTip(advanced, _t.T("adv.open_button_tooltip"));
@@ -351,7 +362,7 @@ public sealed partial class MainWindow : Window
             left.Children.Add(element);
         }
 
-        var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right };
+        var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Right };
         _cancelButton.Content = _t.T(WinStrings.CancelGeneration);
         _cancelButton.Click += (_, _) => CancelGeneration();
         var quit = new Button { Content = _t.T("gen.quit") };
@@ -360,31 +371,83 @@ public sealed partial class MainWindow : Window
         right.Children.Add(quit);
         buttons.Children.Add(left);
         buttons.Children.Add(right);
-        Ui.Place(_generationTab, buttons, row: 1);
 
-        Ui.Place(_generationTab, _status, row: 2);
-        Ui.Place(_generationTab, _progress, row: 3);
-
+        _status.HorizontalAlignment = HorizontalAlignment.Center;
         _logScroll.Content = _logText;
+        _logScroll.MinHeight = 0;
         var logBorder = new Border
         {
             Child = _logScroll,
             Padding = new Thickness(8),
             CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
+            MinHeight = LogMinHeight,
         };
         if (Ui.TryGetResource("ControlStrokeColorDefaultBrush") is Brush stroke)
         {
             logBorder.BorderBrush = stroke;
         }
-        Ui.Place(_generationTab, logBorder, row: 4);
+
+        foreach (var height in new[] { GridLength.Auto, GridLength.Auto, GridLength.Auto, Ui.Star() })
+        {
+            _bottomPart.RowDefinitions.Add(new RowDefinition { Height = height });
+        }
+        Ui.Place(_bottomPart, buttons, row: 0);
+        Ui.Place(_bottomPart, _status, row: 1);
+        Ui.Place(_bottomPart, _progress, row: 2);
+        Ui.Place(_bottomPart, logBorder, row: 3);
+        Ui.Place(_generationTab, _bottomPart, row: 1);
+
+        // The form keeps its natural height, but leaves the bottom part at
+        // least its minimum: past that, it scrolls (the cap of
+        // _apply_form_scroll_limits() in the Linux window).
+        _generationTab.SizeChanged += (_, _) => LimitFormHeight();
     }
 
-    /// <summary>A folder field with its "Choose..." button.</summary>
-    private Grid FolderRow(TextBox field, string kind)
+    private void LimitFormHeight()
     {
-        var row = Ui.Columns(Ui.Star(), GridLength.Auto);
-        var choose = new Button { Content = _t.T("gen.choose"), VerticalAlignment = VerticalAlignment.Bottom };
+        var bottom = 0.0;
+        for (var i = 0; i < _bottomPart.Children.Count - 1; i++)
+        {
+            bottom += ((FrameworkElement)_bottomPart.Children[i]).ActualHeight;
+        }
+        bottom += LogMinHeight + 3 * _bottomPart.RowSpacing;
+        var available = _generationTab.ActualHeight - _generationTab.Padding.Top - _generationTab.Padding.Bottom
+            - _generationTab.RowSpacing - bottom;
+        _formScroll.MaxHeight = Math.Max(120, available);
+    }
+
+    /// <summary>
+    /// Sets the height of the window to what its content needs — form at its
+    /// natural size, log at its minimum — as GTK does for the Linux window,
+    /// never more than the screen holds.
+    /// </summary>
+    private void FitWindowToContent()
+    {
+        if (Content is not FrameworkElement root)
+        {
+            return;
+        }
+        var scale = Scale;
+        var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
+        _formScroll.MaxHeight = double.PositiveInfinity;
+        root.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        var chromeWidth = AppWindow.Size.Width - AppWindow.ClientSize.Width;
+        var chromeHeight = AppWindow.Size.Height - AppWindow.ClientSize.Height;
+        var width = Math.Min((int)Math.Ceiling(root.DesiredSize.Width * scale) + chromeWidth, area.Width);
+        var height = Math.Min((int)Math.Ceiling(root.DesiredSize.Height * scale) + chromeHeight, area.Height);
+        AppWindow.Resize(new SizeInt32(width, height));
+        AppWindow.Move(new PointInt32(area.X + (area.Width - width) / 2, area.Y + (area.Height - height) / 2));
+        root.InvalidateMeasure();
+        LimitFormHeight();
+    }
+
+    /// <summary>A folder field with its label and its "Choose..." button.</summary>
+    private StackPanel FolderRow(TextBox field, string labelKey)
+    {
+        var row = Ui.Line();
+        field.Width = FolderWidth;
+        var choose = new Button { Content = _t.T("gen.choose") };
         choose.Click += async (_, _) =>
         {
             if (await PickFolderAsync() is { } folder)
@@ -392,19 +455,25 @@ public sealed partial class MainWindow : Window
                 field.Text = folder;
             }
         };
-        AutomationProperties.SetName(choose, $"{_t.T("gen.choose")} {(kind == "input" ? _t.Header("gen.input_dir") : _t.Header("gen.output_dir"))}");
-        Ui.Place(row, field, row: 0);
-        Ui.Place(row, choose, row: 0, column: 1);
+        AutomationProperties.SetName(choose, $"{_t.T("gen.choose")} {_t.Header(labelKey)}");
+        row.Children.Add(Ui.Label(_t.T(labelKey), field));
+        row.Children.Add(field);
+        row.Children.Add(choose);
         return row;
     }
 
+    /// <summary>The options, in the grid of the Linux window (8 columns, 6 rows).</summary>
     private Grid BuildOptions()
     {
-        var grid = Ui.Columns(Ui.Star(), Ui.Star(), Ui.Star(), Ui.Star());
-        Ui.Rows(grid, 5);
+        var grid = new Grid { ColumnSpacing = 10, RowSpacing = 6 };
+        for (var i = 0; i < 8; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        }
+        Ui.Rows(grid, 6);
 
-        // Recursive search and the choice of subfolders.
-        var recursiveRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        // Row 0: recursive search and the choice of subfolders.
+        var recursiveRow = Ui.Line();
         _recursive.Content = _t.T("gen.recursive");
         _recursive.Click += (_, _) => OnRecursiveToggled();
         _subfoldersButton.Content = _t.T("gen.subfolders_button");
@@ -413,48 +482,64 @@ public sealed partial class MainWindow : Window
         recursiveRow.Children.Add(_recursive);
         recursiveRow.Children.Add(_subfoldersButton);
         recursiveRow.Children.Add(_subfoldersLabel);
-        Ui.Place(grid, recursiveRow, row: 0, columnSpan: 4);
+        Ui.Place(grid, recursiveRow, row: 0, columnSpan: 8);
         UpdateSubfolderControls();
 
-        Ui.Place(grid, _perSheet, row: 1);
-        Ui.Place(grid, _pageFormat, row: 1, column: 1);
+        // Row 1: images per sheet, sheet format, watermark text and orientation.
+        _watermark.Width = WatermarkWidth;
+        PlaceLabeled(grid, "gen.images_per_sheet", _perSheet, row: 1, column: 0);
+        PlaceLabeled(grid, "gen.sheet_format", _pageFormat, row: 1, column: 2, marginStart: 20);
+        PlaceLabeled(grid, "gen.watermark_text", _watermark, row: 1, column: 4, marginStart: 20);
+        PlaceLabeled(grid, "gen.watermark_orientation", _watermarkOrientation, row: 1, column: 6, marginStart: 20);
+
+        // Row 2: watermark opacity, theme.
+        PlaceLabeled(grid, "gen.watermark_opacity", SliderWithValue(_opacity, _t.Header("gen.watermark_opacity"), " %"),
+            row: 2, column: 0, columnSpan: 3);
         ToolTipService.SetToolTip(_themeMode, _t.T("gen.theme_tooltip"));
-        Ui.Place(grid, _themeMode, row: 1, column: 2);
+        PlaceLabeled(grid, "gen.theme_label", _themeMode, row: 2, column: 4, marginStart: 20);
 
-        _watermark.Header = _t.Header("gen.watermark_text");
-        Ui.Place(grid, _watermark, row: 2);
-        Ui.Place(grid, _watermarkOrientation, row: 2, column: 1);
-        Ui.Place(grid, SliderWithValue(_opacity, _t.Header("gen.watermark_opacity"), " %"), row: 2, column: 2, columnSpan: 2);
-
-        // What to produce.
+        // Rows 3 to 5: what to produce; the gallery options on the row of the gallery.
         _pdf.Content = _t.T("gen.generate_pdf");
         _csv.Content = _t.T("gen.generate_csv");
         _html.Content = _t.T("gen.generate_html");
         _htmlOriginals.Content = _t.T("gen.html_originals");
+        _htmlOriginals.Margin = new Thickness(20, 0, 0, 0);
         ToolTipService.SetToolTip(_htmlOriginals, _t.T("gen.html_originals_tooltip"));
         _html.Click += (_, _) => _htmlOriginals.IsEnabled = _html.IsChecked == true;
-        var outputs = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 24 };
-        outputs.Children.Add(_pdf);
-        outputs.Children.Add(_csv);
-        Ui.Place(grid, outputs, row: 3, columnSpan: 4);
-
-        Ui.Place(grid, _html, row: 4);
-        Ui.Place(grid, SliderWithValue(_htmlPerPage, _t.Header("gen.images_per_page"), ""), row: 4, column: 1);
-        _htmlOriginals.VerticalAlignment = VerticalAlignment.Bottom;
-        Ui.Place(grid, _htmlOriginals, row: 4, column: 2, columnSpan: 2);
-        _html.VerticalAlignment = VerticalAlignment.Bottom;
+        Ui.Place(grid, _pdf, row: 3, columnSpan: 2);
+        Ui.Place(grid, _html, row: 4, columnSpan: 2);
+        Ui.Place(grid, _csv, row: 5, columnSpan: 2);
+        PlaceLabeled(grid, "gen.images_per_page", SliderWithValue(_htmlPerPage, _t.Header("gen.images_per_page"), ""),
+            row: 4, column: 2, columnSpan: 3, marginStart: 20);
+        Ui.Place(grid, _htmlOriginals, row: 4, column: 6, columnSpan: 2);
         return grid;
     }
 
-    /// <summary>A slider with its value written next to it, as the Linux window shows it.</summary>
-    private static Grid SliderWithValue(Slider slider, string header, string unit)
+    /// <summary>A label in <paramref name="column"/>, its control in the next one(s).</summary>
+    private void PlaceLabeled(Grid grid, string labelKey, FrameworkElement control, int row, int column,
+        int columnSpan = 1, double marginStart = 0)
     {
-        var grid = Ui.Columns(Ui.Star(), GridLength.Auto);
-        slider.Header = header;
-        AutomationProperties.SetName(slider, header);
+        if (control is ComboBox combo)
+        {
+            combo.Header = null;
+            combo.MinWidth = 0;
+            combo.HorizontalAlignment = HorizontalAlignment.Left;
+        }
+        control.VerticalAlignment = VerticalAlignment.Center;
+        Ui.Place(grid, Ui.Label(_t.T(labelKey), control, marginStart), row, column);
+        Ui.Place(grid, control, row, column + 1, columnSpan);
+    }
+
+    /// <summary>A slider with its value written on its right, as the Linux window shows it.</summary>
+    private static Grid SliderWithValue(Slider slider, string name, string unit)
+    {
+        var grid = Ui.Columns(new GridLength(SliderWidth), GridLength.Auto);
+        grid.HorizontalAlignment = HorizontalAlignment.Left;
+        slider.Header = null;
+        slider.MinWidth = 0;
+        slider.VerticalAlignment = VerticalAlignment.Center;
+        AutomationProperties.SetName(slider, name);
         var value = Ui.Text($"{slider.Value:0}{unit}");
-        value.VerticalAlignment = VerticalAlignment.Bottom;
-        value.Margin = new Thickness(0, 0, 0, 8);
         value.MinWidth = 40;
         slider.ValueChanged += (_, e) => value.Text = $"{e.NewValue:0}{unit}";
         Ui.Place(grid, slider, row: 0);

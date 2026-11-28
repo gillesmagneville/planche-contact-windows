@@ -15,6 +15,23 @@ GitHub are taken from it (see "Publishing a release" in `CONTRIBUTING.md`).
 
 ## [Unreleased]
 
+### Fixed
+
+- The window follows the language of Windows by default: the regional
+  format (Settings > Time & language > Region) is used first, as the Linux
+  version and the earlier version for Windows do, then the display language.
+  A French Windows displayed in English used to open the window in English.
+- **"Open in Planche-Contact" is on the first level of the Windows 11
+  menu**, as in the earlier version for Windows: an unsigned sparse
+  package, registered for the current user only, without administrator
+  rights and without adding any certificate; File Explorer restarts once at installation. The
+  entry is handled by a DLL in a COM surrogate (`dllhost.exe`), never inside
+  `explorer.exe`. On Windows 10, or where the package cannot be registered,
+  the classic entry stays ("Show more options" on Windows 11).
+- The Generation tab has the layout of the Linux window: labels on the left
+  of their fields, the same rows, and a window that opens at the height of
+  its content instead of having to be scrolled.
+
 ## 2026-11-27 — v5.3.0
 
 First release of **Planche-Contact for Windows**, which replaces the earlier

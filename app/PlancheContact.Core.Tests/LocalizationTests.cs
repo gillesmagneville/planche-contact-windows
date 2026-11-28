@@ -111,6 +111,11 @@ internal static partial class LocalizationTests
         Check.Equal(("en", (string?)"ja"), Translator.Resolve("system", new CultureInfo("ja-JP")));
         Check.Equal(("es", (string?)null), Translator.Resolve("klingon", new CultureInfo("es-ES")), "an unknown preference is the system language");
         Check.Equal(("en", (string?)"?"), Translator.Resolve("system", CultureInfo.InvariantCulture));
+        Check.Equal(("fr", (string?)null), Translator.Resolve("system", new CultureInfo("fr-FR"), new CultureInfo("en-US")),
+            "a French regional format wins over an English display language");
+        Check.Equal(("de", (string?)null), Translator.Resolve("system", new CultureInfo("ja-JP"), new CultureInfo("de-DE")),
+            "the display language is used when the regional format has no translation");
+        Check.Equal(("en", (string?)"ja"), Translator.Resolve("system", new CultureInfo("ja-JP"), new CultureInfo("ko-KR")));
     }
 
     [Test]

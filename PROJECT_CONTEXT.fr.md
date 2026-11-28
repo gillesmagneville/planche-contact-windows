@@ -137,9 +137,11 @@ devraient y fonctionner par émulation, mais ce n'est pas vérifié.
   (ils figurent quand même dans l'index CSV).
 * **L'installeur n'est pas signé numériquement** : SmartScreen demande une
   confirmation.
-* **Sous Windows 11**, l'entrée du menu est dans **Afficher plus
-  d'options** : le premier niveau du menu demanderait une application
-  empaquetée et signée.
+* **Sous Windows 11**, l'entrée au premier niveau du menu vient d'un paquet
+  partiel non signé, que Windows 11 accepte pour l'utilisateur courant ;
+  l'Explorateur redémarre une fois à l'installation. Si le paquet
+  ne peut pas être enregistré, l'entrée classique, dans **Afficher plus
+  d'options**, est utilisée à la place.
 * **Une fenêtre par lancement** : rouvrir Planche-Contact, depuis le menu ou
   le menu Démarrer, ouvre une deuxième fenêtre au lieu de réutiliser la
   première.
@@ -151,7 +153,6 @@ devraient y fonctionner par émulation, mais ce n'est pas vérifié.
 # Feuille de route
 
 * Un installeur signé, qui supprimerait l'avertissement SmartScreen.
-* Une entrée au premier niveau du menu de Windows 11.
 * La lecture des HEIC/HEIF, avec la version Linux.
 * Une seule fenêtre, à laquelle un deuxième lancement donne son dossier.
 * Ce que gagnera la version Linux (mises en page, options, langues).

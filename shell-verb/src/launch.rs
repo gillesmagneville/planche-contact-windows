@@ -64,10 +64,17 @@ pub struct Launched {
 
 /// Starts the application on `paths`.
 pub fn launch_app(paths: &[String]) -> std::io::Result<Launched> {
+    launch_app_at(&app_path()?, paths)
+}
+
+/// Starts the application `app` on `paths` (the Windows 11 menu entry, a
+/// DLL, finds the application next to itself rather than next to the
+/// process that loaded it).
+pub fn launch_app_at(app: &Path, paths: &[String]) -> std::io::Result<Launched> {
     let list = write_selection_file(paths)?;
     // This program has no console: the application gets none of its (absent)
     // standard streams.
-    let child = std::process::Command::new(app_path()?)
+    let child = std::process::Command::new(app)
         .arg("--paths-from")
         .arg(&list)
         .stdin(std::process::Stdio::null())

@@ -1,0 +1,28 @@
+[package]
+name = "planche-contact-menu"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Windows 11 context-menu entry (IExplorerCommand, in a COM surrogate) of planche-contact-windows"
+
+[lib]
+# planche_contact_menu.dll, loaded by dllhost.exe (a COM surrogate) on
+# behalf of File Explorer — never by explorer.exe itself.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+planche-contact-verb = { path = "../shell-verb" }
+
+[target.'cfg(windows)'.dependencies]
+windows-core = "0.62"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Globalization",
+    "Win32_System_Com",
+    "Win32_System_LibraryLoader",
+    "Win32_System_SystemServices",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+] }

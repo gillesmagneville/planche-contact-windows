@@ -1,9 +1,9 @@
-# Cargo workspace of planche-contact-windows: the two Rust programs of the
-# project (engine/ and shell-verb/). The WinUI 3 application (C#) lives in
+# Cargo workspace of planche-contact-windows: the Rust parts of the project
+# (engine/, shell-verb/ and shell-menu/). The WinUI 3 application (C#) lives in
 # app/ and is not built by Cargo.
 [workspace]
 resolver = "2"
-members = ["engine", "shell-verb"]
+members = ["engine", "shell-verb", "shell-menu"]
 
 [workspace.package]
 version = "5.3.0"

@@ -44,6 +44,25 @@ internal static class Ui
         }
     }
 
+    /// <summary>A row of controls side by side, vertically centred (a GTK horizontal box).</summary>
+    public static StackPanel Line(double spacing = 10) =>
+        new() { Orientation = Orientation.Horizontal, Spacing = spacing };
+
+    /// <summary>
+    /// The label of a field, on its left as in the Linux window; it names the
+    /// field for screen readers.
+    /// </summary>
+    public static TextBlock Label(string text, FrameworkElement? target = null, double marginStart = 0)
+    {
+        var label = Text(text, wrap: false);
+        label.Margin = new Thickness(marginStart, 0, 0, 0);
+        if (target is not null)
+        {
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(target, text.TrimEnd().TrimEnd(':').TrimEnd());
+        }
+        return label;
+    }
+
     public static GridLength Star(double value = 1) => new(value, GridUnitType.Star);
 
     public static Visibility ShownIf(bool shown) => shown ? Visibility.Visible : Visibility.Collapsed;

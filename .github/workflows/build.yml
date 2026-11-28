@@ -64,10 +64,10 @@ jobs:
       # They must run on a Windows that has no MinGW installed.
       - name: Check that the programs need no MinGW DLL
         run: |
-          for program in planche-contact-engine planche-contact-verb; do
-            if x86_64-w64-mingw32-objdump -p "target/$WINDOWS_TARGET/release/$program.exe" \
+          for program in planche-contact-engine.exe planche-contact-verb.exe planche_contact_menu.dll; do
+            if x86_64-w64-mingw32-objdump -p "target/$WINDOWS_TARGET/release/$program" \
                 | grep -i 'DLL Name' | grep -i -E 'libstdc\+\+|libgcc|libwinpthread'; then
-              echo "::error::$program.exe depends on a MinGW DLL (see above)"
+              echo "::error::$program depends on a MinGW DLL (see above)"
               exit 1
             fi
           done
@@ -78,6 +78,7 @@ jobs:
           path: |
             target/${{ env.WINDOWS_TARGET }}/release/planche-contact-engine.exe
             target/${{ env.WINDOWS_TARGET }}/release/planche-contact-verb.exe
+            target/${{ env.WINDOWS_TARGET }}/release/planche_contact_menu.dll
           if-no-files-found: error
 
   app:
@@ -113,7 +114,7 @@ jobs:
           $channel = (Select-String -Path rust-toolchain.toml -Pattern '^channel = "(.*)"$').Matches[0].Groups[1].Value
           rustup toolchain install $channel --profile minimal --target $env:WINDOWS_TARGET
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo test --locked -p planche-contact-verb
+          cargo test --locked -p planche-contact-verb -p planche-contact-menu
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build the window
@@ -128,8 +129,17 @@ jobs:
           New-Item -ItemType Directory -Force dist\planche-contact\engine | Out-Null
           Copy-Item engine-windows\planche-contact-engine.exe dist\planche-contact\engine\
           Copy-Item engine-windows\planche-contact-verb.exe dist\planche-contact\
+          Copy-Item engine-windows\planche_contact_menu.dll dist\planche-contact\
           New-Item -ItemType Directory -Force dist\planche-contact\docs | Out-Null
           Copy-Item docs\planche-contact-manual*.html dist\planche-contact\docs\
+
+      # The Windows 11 menu entry: its sparse package, signed (see
+      # shell-menu/packaging/ and ARCHITECTURE.md).
+      - name: Build the Windows 11 menu package
+        shell: powershell
+        run: |
+          & .\tools\build-menu-package.ps1 -Dist dist\planche-contact
+          if (-not $?) { exit 1 }
 
       # On the real thing: the content of the folder, the window started
       # directly, then the whole chain menu handler -> window, as File
