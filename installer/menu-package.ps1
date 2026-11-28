@@ -30,7 +30,14 @@ $Publisher = 'CN=Planche-Contact File Explorer menu'
 $dir = $PSScriptRoot
 $package = Join-Path $dir 'planche-contact-menu.msix'
 $certificate = Join-Path $dir 'planche-contact-menu.cer'
-$store = 'Cert:\CurrentUser\TrustedPeople'
+
+# The current user's "Trusted People" store, through .NET: the Cert: drive
+# of Windows PowerShell only exists once its module is loaded.
+function Open-TrustedPeople {
+    $store = New-Object Security.Cryptography.X509Certificates.X509Store 'TrustedPeople', 'CurrentUser'
+    $store.Open('ReadWrite')
+    return $store
+}
 
 function Log([string] $message) {
     $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
@@ -39,7 +46,10 @@ function Log([string] $message) {
 
 function Remove-Package {
     Get-AppxPackage -Name $PackageName | Remove-AppxPackage
-    Get-ChildItem $store | Where-Object { $_.Subject -eq $Publisher } | Remove-Item
+    $store = Open-TrustedPeople
+    try {
+        foreach ($cert in @($store.Certificates | Where-Object { $_.Subject -eq $Publisher })) { $store.Remove($cert) }
+    } finally { $store.Close() }
 }
 
 try {
@@ -53,7 +63,10 @@ try {
     if (-not (Test-Path $package) -or -not (Test-Path $certificate)) { exit 2 }
 
     Remove-Package   # an earlier version, and its certificate
-    Import-Certificate -FilePath $certificate -CertStoreLocation $store | Out-Null
+    $store = Open-TrustedPeople
+    try {
+        $store.Add((New-Object Security.Cryptography.X509Certificates.X509Certificate2 $certificate))
+    } finally { $store.Close() }
     Add-AppxPackage -Path $package -ExternalLocation $dir
     if ($null -eq (Get-AppxPackage -Name $PackageName)) { throw 'the package is not registered after Add-AppxPackage' }
 
